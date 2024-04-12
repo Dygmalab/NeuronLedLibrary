@@ -25,7 +25,6 @@ void LEDStalkerDefy::TransientLEDMode::onActivate(void) {
   parent_->led_mode.g_       = 0;
   parent_->led_mode.b_       = 0;
   parent_->led_mode.w_       = 100;
-  parent_->led_mode.compute_ = LedModeSerializable_Stalker::RAINBOW;
   sendLedMode(parent_->led_mode);
 }
 
