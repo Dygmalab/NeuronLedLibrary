@@ -1,0 +1,3 @@
+[submodule "LedModeSerializable"]
+	path = LedModeSerializable
+	url = git@github.com:Dygmalab/LedModeSerializable.git
