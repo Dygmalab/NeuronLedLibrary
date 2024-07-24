@@ -25,39 +25,46 @@
 #include "kaleidoscope/Runtime.h"    // for Runtime, Runtime_
 #include "LED-Palette-Theme-Defy.h"  // for LEDPaletteTheme
 
+
 namespace kaleidoscope {
 namespace plugin {
 
-const cRGB defaultcolormap::palette[16]{
-  {255, 0, 0, 0},
-  {0, 255, 0, 0},
-  {0, 0, 255, 0},
-  {0, 0, 0, 255},
-  {150, 75, 0x00, 0},
-  {0xff, 0x55, 0xff, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
-  {0, 0, 0, 0},
+#if COMPILE_DEFY_KEYBOARD
+
+const cRGB defaultcolormap::palette[16]
+{
+    {255, 0, 0, 0},
+    {0, 255, 0, 0},
+    {0, 0, 255, 0},
+    {0, 0, 0, 255},
+    {150, 75, 0x00, 0},
+    {0xff, 0x55, 0xff, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
 };
 
-enum {
-  RED,
-  GREEN,
-  BLUE,
-  WHITE,
-  BROWN,
-  MAGENT
+enum
+{
+    RED,
+    GREEN,
+    BLUE,
+    WHITE,
+    BROWN,
+    MAGENT
 };
-bool defaultcolormap::palette_defined                                                = true;
-const uint8_t defaultcolormap::colormap_layers                                       = 4;
-const uint8_t defaultcolormap::colormaps[4][kaleidoscope_internal::device.led_count] = {
+
+bool defaultcolormap::palette_defined = true;
+const uint8_t defaultcolormap::colormap_layers = 4;
+const uint8_t defaultcolormap::colormaps[4][kaleidoscope_internal::device.led_count] =
+{
   {//KeyMap Left
    GREEN,
    RED,
@@ -718,37 +725,557 @@ const uint8_t defaultcolormap::colormaps[4][kaleidoscope_internal::device.led_co
    WHITE,
    RED}};
 
-void DefaultColormap::setup() {
-  install();
+#elif COMPILE_RAISE2_KEYBOARD
+
+const cRGB defaultcolormap::palette[16]
+{
+    {255, 0, 0, 0},
+    {0, 255, 0, 0},
+    {87, 164, 255, 0},
+    {0, 0, 0, 255},
+    {150, 75, 0x00, 0},
+    {0xff, 0x55, 0xff, 0},
+    {255, 196, 0, 0},
+    {0, 255, 234, 0},
+    {0, 52, 255, 0},
+    {255, 0, 232, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0},
+};
+
+enum
+{
+    RED,
+    GREEN,
+    BLUE,
+    WHITE,
+    BROWN,
+    MAGENT,
+    YELLOW,
+    LIGHT_BLUE,
+    VIOLET,
+    PINK,
+    BLACK
+};
+
+bool defaultcolormap::palette_defined = true;
+const uint8_t defaultcolormap::colormap_layers = 2;
+const uint8_t defaultcolormap::colormaps_iso[2][kaleidoscope_internal::device.led_count] =
+{
+  {//KeyMap Left
+   YELLOW,
+   LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   PINK,
+   BLUE,
+    LIGHT_BLUE,
+   GREEN,
+    GREEN,
+   RED,
+   WHITE,
+    //KeyMap Right
+   RED,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    YELLOW,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+   YELLOW,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    GREEN,
+    GREEN,
+    RED,
+   WHITE,
+    //Underblow left
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    //Underglow right
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+  },{
+    YELLOW,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    PINK,
+    BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    GREEN,
+    RED,
+    WHITE,
+    //KeyMap Right
+    RED,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    YELLOW,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    GREEN,
+    GREEN,
+    RED,
+    WHITE,
+    //Underblow left
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    //Underglow right
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+  }
+};
+
+const uint8_t defaultcolormap::colormaps_ansi[1][kaleidoscope_internal::device.led_count] =
+{
+  {//KeyMap Left
+    YELLOW,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    BLACK,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    PINK,
+    BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    GREEN,
+    RED,
+    WHITE,
+    //KeyMap Right
+    RED,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    YELLOW,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    GREEN,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    LIGHT_BLUE,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    YELLOW,
+    GREEN,
+    GREEN,
+    RED,
+    WHITE,
+    //Underblow left
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    //Underglow right
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+    WHITE,
+  }
+};
+
+#endif  // #elif COMPILE_RAISE2_KEYBOARD
+
+
+void DefaultColormap::setup()
+{
+    install();
 }
 
-void DefaultColormap::install() {
-  if (!defaultcolormap::palette_defined)
-    return;
-
-  for (uint8_t i = 0; i < 16; i++) {
-    cRGB color;
-
-    color.r = defaultcolormap::palette[i].r;
-    color.g = defaultcolormap::palette[i].g;
-    color.b = defaultcolormap::palette[i].b;
-    color.w = defaultcolormap::palette[i].w;
-
-    ::LEDPaletteThemeDefy.updatePaletteColor(i, color);
-  }
-
-  if (defaultcolormap::colormap_layers == 0)
-    return;
-
-  for (uint8_t layer = 0; layer < defaultcolormap::colormap_layers; layer++) {
-    for (int16_t i = 0; i < Runtime.device().led_count; i++) {
-      const uint8_t idx = pgm_read_byte(&(defaultcolormap::colormaps[layer][i]));
-      ::ColormapEffectDefy.updateColorIndexAtPosition(layer, i, idx);
+void DefaultColormap::install()
+{
+    if (!defaultcolormap::palette_defined)
+    {
+        return;
     }
-  }
-  Runtime.storage().commit();
 
-  ::LEDControl.refreshAll();
+    for (uint8_t i = 0; i < 16; i++)
+    {
+        cRGB color;
+
+        color.r = defaultcolormap::palette[i].r;
+        color.g = defaultcolormap::palette[i].g;
+        color.b = defaultcolormap::palette[i].b;
+        color.w = defaultcolormap::palette[i].w;
+
+        ::LEDPaletteThemeDefy.updatePaletteColor(i, color);
+    }
+
+    if (defaultcolormap::colormap_layers == 0)
+    {
+        return;
+    }
+
+    for (uint8_t layer = 0; layer < defaultcolormap::colormap_layers; layer++)
+    {
+        for (int16_t i = 0; i < Runtime.device().led_count; i++)
+        {
+#if COMPILE_DEFY_KEYBOARD
+            const uint8_t idx = pgm_read_byte( &(defaultcolormap::colormaps[layer][i]) );
+            ::ColormapEffectDefy.updateColorIndexAtPosition(layer, i, idx);
+#elif COMPILE_RAISE2_KEYBOARD
+            if (FirmwareVersion::get_layout() == FirmwareVersion::Device::ISO)
+            {
+                const uint8_t idx = pgm_read_byte( &(defaultcolormap::colormaps_iso[layer][i]) );
+                ::ColormapEffectDefy.updateColorIndexAtPosition(layer, i, idx);
+            }
+            else if (FirmwareVersion::get_layout() == FirmwareVersion::Device::ANSI)
+            {
+                const uint8_t idx = pgm_read_byte( &(defaultcolormap::colormaps_ansi[layer][i]) );
+                ::ColormapEffectDefy.updateColorIndexAtPosition(layer, i, idx);
+            }
+#endif
+        }
+    }
+    Runtime.storage().commit();
+
+    ::LEDControl.refreshAll();
 }
 
 }  // namespace plugin

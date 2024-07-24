@@ -25,7 +25,11 @@ void LEDStalkerDefy::TransientLEDMode::onActivate(void) {
   parent_->led_mode.g_       = 0;
   parent_->led_mode.b_       = 0;
   parent_->led_mode.w_       = 100;
-  parent_->led_mode.compute_ = LedModeSerializable_Stalker::RAINBOW;
+
+#if COMPILE_RAISE2_KEYBOARD
+  //parent_->led_mode.compute_ = LedModeSerializable_Stalker::RAINBOW;
+#endif
+
   sendLedMode(parent_->led_mode);
 }
 

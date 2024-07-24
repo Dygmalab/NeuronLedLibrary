@@ -77,7 +77,14 @@ namespace plugin {
 namespace defaultcolormap {
 extern bool palette_defined;
 extern const cRGB palette[];
+
+#if COMPILE_DEFY_KEYBOARD
 extern const uint8_t colormaps[][kaleidoscope_internal::device.led_count];
+#elif COMPILE_RAISE2_KEYBOARD
+extern const uint8_t colormaps_iso[][kaleidoscope_internal::device.led_count];
+extern const uint8_t colormaps_ansi[][kaleidoscope_internal::device.led_count];
+#endif
+
 extern const uint8_t colormap_layers;
 }  // namespace defaultcolormap
 

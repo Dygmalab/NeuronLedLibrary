@@ -23,6 +23,7 @@
 #include "LedModeSerializable-Layer.h"
 #include "LedModeCommunication.h"
 //#include "SPISlave.h"
+
 using namespace Communications_protocol;
 
 namespace kaleidoscope {
