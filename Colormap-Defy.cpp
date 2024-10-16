@@ -175,7 +175,19 @@ namespace kaleidoscope {
                                           ([this](Packet packet) {
                                               updateUnderGlowCommunications(packet);
                                           }));
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              updateKeyMapCommunications(packet);
+                                          }));
 
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              updateUnderGlowCommunications(packet);
+                                          }));
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              ::LEDControl.set_mode(::LEDControl.get_mode_index());
+                                          }));
             return EventHandlerResult::OK;
         }
 
@@ -185,7 +197,8 @@ void ColormapEffectDefy::updateKeyMapCommunications(Packet &packet)
 
             uint8_t layerColors[Runtime.device().led_count];
             uint8_t baseKeymapIndex;
-            if (packet.header.device == KEYSCANNER_DEFY_RIGHT ||
+            if (packet.header.device == KEYSCANN
+            ER_DEFY_RIGHT ||
                 packet.header.device == Communications_protocol::RF_DEFY_RIGHT ||
                 packet.header.device == Communications_protocol::BLE_DEFY_RIGHT)
             {
