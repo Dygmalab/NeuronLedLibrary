@@ -197,8 +197,7 @@ void ColormapEffectDefy::updateKeyMapCommunications(Packet &packet)
 
             uint8_t layerColors[Runtime.device().led_count];
             uint8_t baseKeymapIndex;
-            if (packet.header.device == KEYSCANN
-            ER_DEFY_RIGHT ||
+            if (packet.header.device == KEYSCANNER_DEFY_RIGHT ||
                 packet.header.device == Communications_protocol::RF_DEFY_RIGHT ||
                 packet.header.device == Communications_protocol::BLE_DEFY_RIGHT)
             {
