@@ -175,7 +175,19 @@ namespace kaleidoscope {
                                           ([this](Packet packet) {
                                               updateUnderGlowCommunications(packet);
                                           }));
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              updateKeyMapCommunications(packet);
+                                          }));
 
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              updateUnderGlowCommunications(packet);
+                                          }));
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([this](Packet packet) {
+                                              ::LEDControl.set_mode(::LEDControl.get_mode_index());
+                                          }));
             return EventHandlerResult::OK;
         }
 
