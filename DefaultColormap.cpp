@@ -29,20 +29,18 @@
 namespace kaleidoscope {
 namespace plugin {
 
-#if COMPILE_DEFY_KEYBOARD
-
 const cRGB defaultcolormap::palette[16]
 {
     {255, 0, 0, 0},
     {0, 255, 0, 0},
-    {0, 0, 255, 0},
+    {87, 164, 255, 0},
     {0, 0, 0, 255},
     {150, 75, 0x00, 0},
     {0xff, 0x55, 0xff, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
+    {255, 196, 0, 0},
+    {0, 255, 234, 0},
+    {0, 52, 255, 0},
+    {255, 0, 232, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0},
     {0, 0, 0, 0},
@@ -58,8 +56,15 @@ enum
     BLUE,
     WHITE,
     BROWN,
-    MAGENT
+    MAGENT,
+    YELLOW,
+    LIGHT_BLUE,
+    VIOLET,
+    PINK,
+    BLACK
 };
+
+#if COMPILE_DEFY_KEYBOARD
 
 bool defaultcolormap::palette_defined = true;
 const uint8_t defaultcolormap::colormap_layers = 4;
@@ -727,40 +732,6 @@ const uint8_t defaultcolormap::colormaps[4][kaleidoscope_internal::device.led_co
 
 #elif COMPILE_RAISE2_KEYBOARD
 
-const cRGB defaultcolormap::palette[16]
-{
-    {255, 0, 0, 0},
-    {0, 255, 0, 0},
-    {87, 164, 255, 0},
-    {0, 0, 0, 255},
-    {150, 75, 0x00, 0},
-    {0xff, 0x55, 0xff, 0},
-    {255, 196, 0, 0},
-    {0, 255, 234, 0},
-    {0, 52, 255, 0},
-    {255, 0, 232, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-};
-
-enum
-{
-    RED,
-    GREEN,
-    BLUE,
-    WHITE,
-    BROWN,
-    MAGENT,
-    YELLOW,
-    LIGHT_BLUE,
-    VIOLET,
-    PINK,
-    BLACK
-};
 
 bool defaultcolormap::palette_defined = true;
 const uint8_t defaultcolormap::colormap_layers = 2;
