@@ -193,62 +193,6 @@ namespace kaleidoscope {
 
 void ColormapEffectDefy::updateKeyMapCommunications(Packet &packet)
 {
-#if COMPILE_DEFY_KEYBOARD
-
-            uint8_t layerColors[Runtime.device().led_count];
-            uint8_t baseKeymapIndex;
-            if (packet.header.device == KEYSCANNER_DEFY_RIGHT ||
-                packet.header.device == Communications_protocol::RF_DEFY_RIGHT ||
-                packet.header.device == Communications_protocol::BLE_DEFY_RIGHT)
-            {
-                baseKeymapIndex = Runtime.device().ledDriver().key_matrix_leds;
-            }
-            else
-            {
-                baseKeymapIndex = 0;
-            }
-
-            union PaletteJoiner
-            {
-                struct
-                {
-                    uint8_t firstColor : 4;
-                    uint8_t secondColor : 4;
-                };
-
-                uint8_t paletteColor;
-            };
-
-            for (uint8_t layer = 0; layer < max_layers_; ++layer)
-            {
-                getLayer(layer, layerColors);
-                packet.header.command = LAYER_KEYMAP_COLORS;
-                const uint8_t sizeofMessage = Runtime.device().ledDriver().key_matrix_leds / 2.0 + 0.5;
-                PaletteJoiner message[sizeofMessage];
-                packet.header.size = sizeof(message) + 1;
-                packet.data[0]     = layer;
-                uint8_t k{};
-                bool swap = true;
-
-                for (int j = 0; j < Runtime.device().ledDriver().key_matrix_leds; ++j)
-                {
-                    if (swap)
-                    {
-                        message[k].firstColor = layerColors[baseKeymapIndex + j];
-                    }
-                    else
-                    {
-                        message[k++].secondColor = layerColors[baseKeymapIndex + j];
-                    }
-
-                    swap = !swap;
-                }
-
-                memcpy(&packet.data[1], message, packet.header.size - 1);
-                Communications.sendPacket(packet);
-            }
-
-#elif COMPILE_RAISE2_KEYBOARD
     union PaletteJoiner {
     struct {
       uint8_t firstColor : 4;
@@ -312,71 +256,10 @@ void ColormapEffectDefy::updateKeyMapCommunications(Packet &packet)
       right_side = false;
     }
   }
-
-
-#endif  // #elif COMPILE_RAISE2_KEYBOARD
 }
 
 void ColormapEffectDefy::updateUnderGlowCommunications(Packet &packet)
 {
-#if COMPILE_DEFY_KEYBOARD
-
-            uint8_t layerColors[Runtime.device().led_count];
-            uint8_t baseUnderGlowIndex;
-            if (packet.header.device == KEYSCANNER_DEFY_RIGHT ||
-                packet.header.device == Communications_protocol::RF_DEFY_RIGHT ||
-                packet.header.device == Communications_protocol::BLE_DEFY_RIGHT)
-            {
-                baseUnderGlowIndex = (Runtime.device().ledDriver().key_matrix_leds) * 2 +
-                        Runtime.device().ledDriver().underglow_leds;
-            }
-            else
-            {
-                baseUnderGlowIndex = Runtime.device().ledDriver().key_matrix_leds * 2;
-            }
-
-            union PaletteJoiner
-            {
-                struct
-                {
-                    uint8_t firstColor: 4;
-                    uint8_t secondColor: 4;
-                };
-
-                uint8_t paletteColor;
-            };
-
-            for (uint8_t layer = 0; layer < max_layers_; ++layer)
-            {
-                getLayer(layer, layerColors);
-                packet.header.command = Communications_protocol::LAYER_UNDERGLOW_COLORS;
-                const uint8_t sizeofMessage = Runtime.device().ledDriver().underglow_leds / 2.0 + 0.5;
-                PaletteJoiner message[sizeofMessage];
-                packet.header.size = sizeof(message) + 1;
-                packet.data[0] = layer;
-
-                bool swap = true;
-                uint8_t k{};
-                for (int j = 0; j < Runtime.device().ledDriver().underglow_leds; ++j)
-                {
-                    if (swap)
-                    {
-                        message[k].firstColor = layerColors[baseUnderGlowIndex + j];
-                    }
-                    else
-                    {
-                        message[k++].secondColor = layerColors[baseUnderGlowIndex + j];
-                    }
-
-                    swap = !swap;
-                }
-
-                memcpy(&packet.data[1], message, packet.header.size - 1);
-                Communications.sendPacket(packet);
-            }
-
-#elif COMPILE_RAISE2_KEYBOARD
-
     right_side = false;
 
   union PaletteJoiner {
@@ -456,8 +339,6 @@ void ColormapEffectDefy::updateUnderGlowCommunications(Packet &packet)
       Communications.sendPacket(packet);
     }
   }
-
-#endif  // #elif COMPILE_RAISE2_KEYBOARD
 }
 
 void ColormapEffectDefy::updateBrigthness(LedBrightnessControlEffect led_effect_id, bool take_brightness_handler, bool updateWiredBrightness)
