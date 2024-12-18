@@ -86,6 +86,8 @@ class ColormapEffectDefy : public Plugin,
   static uint16_t map_base_;
   void updateKeyMapCommunications(Packet &packet);
   void updateUnderGlowCommunications(Packet &packet);
+
+
 };
 }  // namespace plugin
 }  // namespace kaleidoscope

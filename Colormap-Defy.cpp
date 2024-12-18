@@ -175,9 +175,18 @@ namespace kaleidoscope {
                                           ([this](Packet packet) {
                                               updateUnderGlowCommunications(packet);
                                           }));
+            Communications.callbacks.bind(CONNECTED,
+                                          ([](Packet packet) {
+                                            kaleidoscope::plugin::LEDControl::get_mode<TransientLEDMode>()->onActivate();
+                                          }));
             Communications.callbacks.bind(RETRY_LAYERS,
                                           ([this](Packet packet) {
-                                              updateKeyMapCommunications(packet);
+                                            updateKeyMapCommunications(packet);
+                                          }));
+
+            Communications.callbacks.bind(RETRY_LAYERS,
+                                          ([](Packet packet) {
+                                             LEDPaletteThemeDefy::updatePaletteCommunication(packet);
                                           }));
 
             Communications.callbacks.bind(RETRY_LAYERS,
@@ -185,8 +194,8 @@ namespace kaleidoscope {
                                               updateUnderGlowCommunications(packet);
                                           }));
             Communications.callbacks.bind(RETRY_LAYERS,
-                                          ([this](Packet packet) {
-                                              ::LEDControl.set_mode(::LEDControl.get_mode_index());
+                                          ([](Packet packet) {
+                                            kaleidoscope::plugin::LEDControl::get_mode<TransientLEDMode>()->onActivate();
                                           }));
             return EventHandlerResult::OK;
         }
