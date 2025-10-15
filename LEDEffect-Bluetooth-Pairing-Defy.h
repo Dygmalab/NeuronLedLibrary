@@ -24,51 +24,30 @@
 
 #pragma once
 
-#include "Kaleidoscope-LEDControl.h"
+#include "LEDEffect.h"
 #include "LedModeSerializable-BluetoothPairing.h"
 #include "LedModeCommunication.h"
 
-namespace kaleidoscope {
-namespace plugin {
-class LEDBluetoothPairingDefy : public Plugin,
-                                public LEDModeInterface,
+class LEDBluetoothPairingDefy : public LEDEffect,
                                 public LedModeCommunication {
- public:
-  LEDBluetoothPairingDefy() {
-    led_mode.base_settings.delay_ms = 20;
-  }
-  LedModeSerializable_BluetoothPairing &led_mode = ledModeSerializableBluetoothPairing;
+  public:
+    LEDBluetoothPairingDefy() : LEDEffect( LED_EFFECT_TYPE_BLUETOOTH_PAIRING )
+    {
+        led_mode.base_settings.delay_ms = 20;
+    }
+    LedModeSerializable_BluetoothPairing &led_mode = ledModeSerializableBluetoothPairing;
 
-  void setPairedChannels(uint8_t channel);
+    void activate() final;
 
-  void setConnectedChannel(uint8_t channel);
+    void setPairedChannels(uint8_t channel);
 
-  void setAvertisingModeOn(uint8_t advertising_id_);
+    void setConnectedChannel(uint8_t channel);
 
-  void setEreaseDone(uint8_t erease_status);
+    void setAvertisingModeOn(uint8_t advertising_id_);
 
-  void setDefyId(uint8_t defy_id);
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDBluetoothPairingDefy *parent)
-      : parent_(parent) {}
+    void setEreaseDone(uint8_t erease_status);
 
-    void update() final;
-
-   protected:
-    void onActivate(void) final;
-
-   private:
-    const LEDBluetoothPairingDefy *parent_;
-    uint8_t paired_channels_;
-  };
+    void setDefyId(uint8_t defy_id);
 };
-}  // namespace plugin
-}  // namespace kaleidoscope
-extern kaleidoscope::plugin::LEDBluetoothPairingDefy ledBluetoothPairingDefy;
+
+extern class LEDBluetoothPairingDefy LEDBluetoothPairingDefy;

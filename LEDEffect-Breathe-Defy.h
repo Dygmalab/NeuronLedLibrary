@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-SolidColor - Solid color LED effects for Kaleidoscope.
+/* LEDEffect-Breathe-Defy - Breathe LED effect for keyscanner sides.
  * Copyright (C) 2017  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,44 +17,22 @@
 
 #pragma once
 
-#include "Kaleidoscope-LEDControl.h"
+#include "LEDEffect.h"
 #include "LedModeSerializable-Breathe.h"
 #include "LedModeCommunication.h"
 
-namespace kaleidoscope {
-namespace plugin {
-class LEDBreatheDefy : public Plugin,
-                       public LEDModeInterface,
+class LEDBreatheDefy : public LEDEffect,
                        public LedModeCommunication {
- public:
-  LEDBreatheDefy(uint8_t hue, uint8_t saturation)
-    : hue_(hue), saturation_(saturation) {
-    led_mode.base_settings.delay_ms = 50;
-  }
-  LedModeSerializable_Breathe &led_mode = ledModeSerializableBreathe;
+  public:
+    LEDBreatheDefy(uint8_t hue, uint8_t saturation)
+    : LEDEffect(LED_EFFECT_TYPE_BREATHE), hue_(hue), saturation_(saturation)
+    {
+        led_mode.base_settings.delay_ms = 50;
+    }
+    LedModeSerializable_Breathe &led_mode = ledModeSerializableBreathe;
 
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDBreatheDefy *parent)
-      : parent_(parent) {}
+    void activate() final;
 
-    void update() final;
-
-   protected:
-    void onActivate(void) final;
-
-   private:
-    const LEDBreatheDefy *parent_;
-  };
-
- private:
-  uint8_t hue_, saturation_;
+  private:
+    uint8_t hue_, saturation_;
 };
-}  // namespace plugin
-}  // namespace kaleidoscope

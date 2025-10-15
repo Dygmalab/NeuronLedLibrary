@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-Stalker - Solid color LED effects for Kaleidoscope.
+/* LEDEffect-Stalker-Defy - Solid color LED effects for keyscanner sides.
  * Copyright (C) 2017  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,42 +17,20 @@
 
 #pragma once
 
-#include "Kaleidoscope-LEDControl.h"
+#include "LEDEffect.h"
 #include "LedModeSerializable-Stalker.h"
 #include "LedModeCommunication.h"
 
-namespace kaleidoscope {
-namespace plugin {
-class LEDStalkerDefy : public Plugin,
-                       public LEDModeInterface,
+class LEDStalkerDefy : public LEDEffect,
                        public LedModeCommunication {
- public:
-  LEDStalkerDefy() {
-    led_mode.base_settings.delay_ms = 50;
-  }
-  LedModeSerializable_Stalker &led_mode = ledModeSerializableStalker;
+  public:
+    LEDStalkerDefy() : LEDEffect( LED_EFFECT_TYPE_STALKER )
+    {
+        led_mode.base_settings.delay_ms = 50;
+    }
+    LedModeSerializable_Stalker &led_mode = ledModeSerializableStalker;
 
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDStalkerDefy *parent)
-      : parent_(parent) {}
-
-    void update() final;
-
-   protected:
-    void onActivate(void) final;
-
-   private:
-    const LEDStalkerDefy *parent_;
-  };
-
- private:
+    void activate() final;
 };
-}  // namespace plugin
-}  // namespace kaleidoscope
+
+extern class LEDStalkerDefy LEDStalkerDefy;

@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-SolidColor - Solid color LED effects for Kaleidoscope.
+/* LEDEffect-Stalker-Defy - Solid color LED effects for keyscanner sides.
  * Copyright (C) 2017  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,22 +17,13 @@
 
 #include "LEDEffect-Stalker-Defy.h"
 
-namespace kaleidoscope {
-namespace plugin {
+void LEDStalkerDefy::activate(void) {
+    led_mode.r_ = 100;
+    led_mode.g_ = 0;
+    led_mode.b_ = 0;
+    led_mode.w_ = 100;
 
-void LEDStalkerDefy::TransientLEDMode::onActivate(void) {
-  parent_->led_mode.r_       = 100;
-  parent_->led_mode.g_       = 0;
-  parent_->led_mode.b_       = 0;
-  parent_->led_mode.w_       = 100;
-
-  //parent_->led_mode.compute_ = LedModeSerializable_Stalker::RAINBOW;
-
-  sendLedMode(parent_->led_mode);
+    sendLedMode(led_mode);
 }
 
-void LEDStalkerDefy::TransientLEDMode::update(void) {
-  //  parent_->led_mode.update();
-}
-}  // namespace plugin
-}  // namespace kaleidoscope
+class LEDStalkerDefy LEDStalkerDefy;

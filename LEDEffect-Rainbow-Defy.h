@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-Rainbow - Rainbow LED effects for Kaleidoscope.
+/* LEDEffect-Rainbow-Defy - Rainbow LED effects for keyscanner sides.
  * Copyright (C) 2017-2018  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,109 +17,68 @@
 
 #pragma once
 
-#include "Kaleidoscope-LEDControl.h"
+#include "LEDEffect.h"
 #include "LedModeSerializable-Rainbow.h"
-#include "LedModeCommunication.h"
 #include "LedModeSerializable-RainbowWave.h"
+#include "LedModeCommunication.h"
 
-namespace kaleidoscope {
-namespace plugin {
-class LEDRainbowEffectDefy : public Plugin,
-                             public LEDModeInterface,
+
+class LEDRainbowEffectDefy : public LEDEffect,
                              public LedModeCommunication {
- public:
-  LEDRainbowEffectDefy(void) {
-    led_mode.base_settings.brightness = 255;
-    led_mode.base_settings.delay_ms   = 40;
-  }
+  public:
+    LEDRainbowEffectDefy(void) : LEDEffect( LED_EFFECT_TYPE_RAINBOW )
+    {
+        led_mode.base_settings.brightness = 255;
+        led_mode.base_settings.delay_ms = 40;
+    }
 
-  void brightness(uint8_t);
+    LedModeSerializable_Rainbow &led_mode = ledModeSerializableRainbow;
 
-  uint8_t brightness() {
-    return led_mode.base_settings.brightness;
-  }
+    void activate() final;
 
-  void update_delay(uint8_t);
+    void brightness(uint8_t);
 
-  uint8_t update_delay(void) {
-    return led_mode.base_settings.delay_ms;
-  }
+    uint8_t brightness()
+    {
+        return led_mode.base_settings.brightness;
+    }
 
-  LedModeSerializable_Rainbow &led_mode = ledModeSerializableRainbow;
+    void update_delay(uint8_t);
 
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDRainbowEffectDefy *parent)
-      : parent_(parent) {}
-
-    void update() final;
-
-   protected:
-    void onActivate() override;
-
-   private:
-    LEDRainbowEffectDefy *parent_;
-    uint16_t rainbowLastUpdateKeyScanner = 0;
-  };
-
- private:
+    uint8_t update_delay(void)
+    {
+        return led_mode.base_settings.delay_ms;
+    }
 };
 
 
-class LEDRainbowWaveEffectDefy : public Plugin,
-                                 public LEDModeInterface,
+class LEDRainbowWaveEffectDefy : public LEDEffect,
                                  public LedModeCommunication {
- public:
-  LEDRainbowWaveEffectDefy(void) {
-    led_mode.base_settings.brightness = 255;
-    led_mode.base_settings.delay_ms   = 40;
-  }
+  public:
+    LEDRainbowWaveEffectDefy(void) : LEDEffect( LED_EFFECT_TYPE_RAINBOW_WAVE )
+    {
+        led_mode.base_settings.brightness = 255;
+        led_mode.base_settings.delay_ms = 40;
+    }
 
-  void brightness(uint8_t);
+    LedModeSerializable_RainbowWave &led_mode = ledModeSerializableRainbowWave;
 
-  uint8_t brightness() {
-    return led_mode.base_settings.brightness;
-  }
+    void activate() final;
 
-  void update_delay(uint8_t);
+    void brightness(uint8_t);
 
-  uint8_t update_delay(void) {
-    return led_mode.base_settings.delay_ms;
-  }
+    uint8_t brightness()
+    {
+        return led_mode.base_settings.brightness;
+    }
 
-  LedModeSerializable_RainbowWave &led_mode = ledModeSerializableRainbowWave;
+    void update_delay(uint8_t);
 
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDRainbowWaveEffectDefy *parent)
-      : parent_(parent) {}
-
-    void update() final;
-    uint16_t rainbowWaveLastUpdateKeyScanner = 0;
-
-   protected:
-    void onActivate() override;
-
-   private:
-    LEDRainbowWaveEffectDefy *parent_;
-  };
-
- private:
+    uint8_t update_delay(void)
+    {
+        return led_mode.base_settings.delay_ms;
+    }
 };
-}  // namespace plugin
-}  // namespace kaleidoscope
 
-extern kaleidoscope::plugin::LEDRainbowEffectDefy LEDRainbowEffectDefy;
-extern kaleidoscope::plugin::LEDRainbowWaveEffectDefy LEDRainbowWaveEffectDefy;
+extern class LEDRainbowEffectDefy LEDRainbowEffectDefy;
+extern class LEDRainbowWaveEffectDefy LEDRainbowWaveEffectDefy;

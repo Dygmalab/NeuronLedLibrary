@@ -24,16 +24,10 @@
 
 #include "LEDEffect-Bluetooth-Pairing-Defy.h"
 
-namespace kaleidoscope {
-namespace plugin {
-
-void LEDBluetoothPairingDefy::TransientLEDMode::onActivate(void) {
-  sendLedMode(parent_->led_mode);
+void LEDBluetoothPairingDefy::activate(void) {
+    sendLedMode(led_mode);
 }
 
-void LEDBluetoothPairingDefy::TransientLEDMode::update(void) {
-  parent_->led_mode.update();
-}
 void LEDBluetoothPairingDefy::setPairedChannels(uint8_t channel) {
   ledModeSerializableBluetoothPairing.paired_channels_ = channel;
 }
@@ -49,6 +43,5 @@ void LEDBluetoothPairingDefy::setEreaseDone(uint8_t erease_status) {
 void LEDBluetoothPairingDefy::setDefyId(uint8_t defy_id) {
   ledModeSerializableBluetoothPairing.advertising_id = defy_id;
 }
-}  // namespace plugin
-}  // namespace kaleidoscope
-kaleidoscope::plugin::LEDBluetoothPairingDefy ledBluetoothPairingDefy;
+
+class LEDBluetoothPairingDefy LEDBluetoothPairingDefy;

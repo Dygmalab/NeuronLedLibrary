@@ -24,41 +24,21 @@
 
 #pragma once
 
-#include "Kaleidoscope-LEDControl.h"
+#include "LEDEffect.h"
 #include "LedModeSerializable-BatteryStatus.h"
 #include "LedModeCommunication.h"
 
-namespace kaleidoscope {
-namespace plugin {
-class LEDBatteryStatusDefy : public Plugin,
-                             public LEDModeInterface,
+class LEDBatteryStatusDefy : public LEDEffect,
                              public LedModeCommunication {
- public:
-  LEDBatteryStatusDefy() {
-    ledModeSerializableBatteryStatus.base_settings.delay_ms = 255;
-  }
+  public:
+    LEDBatteryStatusDefy() : LEDEffect( LED_EFFECT_TYPE_BATTERY_LEVEL )
+    {
+        ledModeSerializableBatteryStatus.base_settings.delay_ms = 255;
+    }
 
-  LedModeSerializable_BatteryStatus &led_mode = ledModeSerializableBatteryStatus;
+    LedModeSerializable_BatteryStatus &led_mode = ledModeSerializableBatteryStatus;
 
-  // This class' instance has dynamic lifetime
-  //
-  class TransientLEDMode : public LEDMode {
-   public:
-    // Please note that storing the parent ptr is only required
-    // for those LED modes that require access to
-    // members of their parent class. Most LED modes can do without.
-    //
-    explicit TransientLEDMode(LEDBatteryStatusDefy *parent)
-      : parent_(parent) {}
-
-    void update() final;
-
-   protected:
-    void onActivate(void) final;
-
-   private:
-    const LEDBatteryStatusDefy *parent_;
-  };
+    void activate() final;
 };
-}  // namespace plugin
-}  // namespace kaleidoscope
+
+extern class LEDBatteryStatusDefy LEDBatteryStatusDefy;

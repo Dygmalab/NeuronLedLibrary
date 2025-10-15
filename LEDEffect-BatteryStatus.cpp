@@ -24,15 +24,8 @@
 
 #include "LEDEffect-BatteryStatus-Defy.h"
 
-namespace kaleidoscope {
-namespace plugin {
-
-void LEDBatteryStatusDefy::TransientLEDMode::onActivate(void) {
-  sendLedMode(parent_->led_mode);
+void LEDBatteryStatusDefy::activate(void) {
+    sendLedMode(led_mode);
 }
 
-void LEDBatteryStatusDefy::TransientLEDMode::update(void) {
-  parent_->led_mode.update();
-}
-}  // namespace plugin
-}  // namespace kaleidoscope
+class LEDBatteryStatusDefy LEDBatteryStatusDefy;

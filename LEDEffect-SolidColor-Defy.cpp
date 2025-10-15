@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-SolidColor - Solid color LED effects for Kaleidoscope.
+/* LEDEffect-SolidColor-Defy - Solid color LED effects for keyscanner sides.
  * Copyright (C) 2017  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,19 +17,17 @@
 
 #include "LEDEffect-SolidColor-Defy.h"
 
-namespace kaleidoscope {
-namespace plugin {
+void LEDSolidColorDefy::activate(void) {
+    led_mode.r_ = r_;
+    led_mode.g_ = g_;
+    led_mode.b_ = b_;
+    led_mode.w_ = w_;
 
-void LEDSolidColorDefy::TransientLEDMode::onActivate(void) {
-  parent_->led_mode.r_ = parent_->r_;
-  parent_->led_mode.g_ = parent_->g_;
-  parent_->led_mode.b_ = parent_->b_;
-  parent_->led_mode.w_ = parent_->w_;
-  sendLedMode(parent_->led_mode);
+    sendLedMode(led_mode);
 }
 
-void LEDSolidColorDefy::TransientLEDMode::update(void) {
-  parent_->led_mode.update();
-}
-}  // namespace plugin
-}  // namespace kaleidoscope
+class LEDSolidColorDefy solidRedDefy(LEDEffect::LED_EFFECT_TYPE_SOLID_RED, 255, 0, 0, 0);
+class LEDSolidColorDefy solidGreenDefy(LEDEffect::LED_EFFECT_TYPE_SOLID_GREEN, 0, 255, 0, 0);
+class LEDSolidColorDefy solidBlueDefy(LEDEffect::LED_EFFECT_TYPE_SOLID_BLUE, 0, 0, 255, 0);
+class LEDSolidColorDefy solidWhiteDefy(LEDEffect::LED_EFFECT_TYPE_SOLID_WHITE, 0, 0, 0, 255);
+class LEDSolidColorDefy solidBlackDefy(LEDEffect::LED_EFFECT_TYPE_SOLID_BLACK, 0, 0, 0, 0);

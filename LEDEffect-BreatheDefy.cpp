@@ -1,4 +1,4 @@
-/* Kaleidoscope-LEDEffect-SolidColor - Solid color LED effects for Kaleidoscope.
+/* LEDEffect-Breathe-Defy - Breathe LED effect for keyscanner sides.
  * Copyright (C) 2017  Keyboard.io, Inc.
  * Copyright (C) 2023, 2024  DygmaLabs, S. L.
  *
@@ -17,18 +17,10 @@
 
 #include "LEDEffect-Breathe-Defy.h"
 
-namespace kaleidoscope {
-namespace plugin {
+void LEDBreatheDefy::activate(void) {
+    led_mode.breatheHue             = hue_;
+    led_mode.breatheSaturation      = saturation_;
+    led_mode.base_settings.delay_ms = 50;
 
-void LEDBreatheDefy::TransientLEDMode::onActivate(void) {
-  parent_->led_mode.breatheHue             = parent_->hue_;
-  parent_->led_mode.breatheSaturation      = parent_->saturation_;
-  parent_->led_mode.base_settings.delay_ms = 50;
-  sendLedMode(parent_->led_mode);
+    sendLedMode(led_mode);
 }
-
-void LEDBreatheDefy::TransientLEDMode::update(void) {
-  parent_->led_mode.update();
-}
-}  // namespace plugin
-}  // namespace kaleidoscope
