@@ -1,4 +1,4 @@
-/* LEDEffectIf - Interface for Dygma LED Effects.
+/* LEDEffect - Interface for Dygma LED Effects.
  * Copyright (C) 2025  DygmaLabs, S. L.
  *
  * The MIT License (MIT)

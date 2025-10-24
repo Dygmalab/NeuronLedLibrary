@@ -1,4 +1,4 @@
-/* LEDEffectIf - Interface for Dygma LED Effects.
+/* LEDEffect - Interface for Dygma LED Effects.
  * Copyright (C) 2025  DygmaLabs, S. L.
  *
  * The MIT License (MIT)
@@ -30,7 +30,7 @@ class LEDEffect
 
     typedef enum
     {
-        LED_EFFECT_TYPE_DEFAULT = 0,
+        LED_EFFECT_TYPE_DEFAULT = 0,    /* Normally represents processing of the LED Layers */
 
         LED_EFFECT_TYPE_SOLID_RED = 1,
         LED_EFFECT_TYPE_SOLID_GREEN,
