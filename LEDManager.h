@@ -62,11 +62,15 @@ class LEDManager {
     void led_effect_set_previous( void );
     void led_effect_activate( void );
 
+
+    kbdapi_event_result_t command_led_process( const char * p_command );
+
   private:
     static const kbdif_handlers_t kbdif_handlers;
     static const LEDEffect_list_t LEDEffect_list_regular;
     static const LEDEffect_list_t LEDEffect_list_specific;
 
+    static kbdapi_event_result_t kbdif_command_event_cb( void * p_instance, const char * p_command );
     static kbdapi_event_result_t kbdif_led_layer_change_event_cb( void * p_instance, kbdapi_led_layer_id_t layer_id );
     static kbdapi_event_result_t kbdif_led_effect_change_event_cb( void * p_instance, kbdapi_led_effect_action_t action );
 };

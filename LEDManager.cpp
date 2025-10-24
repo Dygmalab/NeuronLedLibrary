@@ -32,6 +32,10 @@
 #include "LEDEffect-Stalker-Defy.h"
 
 
+#include "Kaleidoscope-FocusSerial.h"
+//#include "Kaleidoscope-EEPROM-Settings.h"
+#warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
+#include "LEDControlDygma.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
@@ -49,6 +53,7 @@ result_t LEDManager::init()
 {
     result_t result = RESULT_ERR;
 
+    /* Initialize the keyboard interface */
     result = kbdif_initialize( );
     EXIT_IF_ERR( result, "kbdif_initialize failed" );
 
@@ -234,7 +239,20 @@ result_t LEDManager::kbdif_initialize()
     result = kbdifmgr_add( p_kbdif );
     EXIT_IF_ERR( result, "kbdifmgr_add failed" );
 
-    _EXIT:
+_EXIT:
+    return result;
+}
+
+kbdapi_event_result_t LEDManager::kbdif_command_event_cb( void * p_instance, const char * p_command )
+{
+    LEDManager * p_LEDManager = ( LEDManager *)p_instance;
+    kbdapi_event_result_t result = KBDAPI_EVENT_RESULT_IGNORED;
+
+    result = p_LEDManager->command_led_process( p_command );
+    EXIT_IF_KBDAPI_NOT_IGNORED( result );
+
+
+_EXIT:
     return result;
 }
 
@@ -280,8 +298,159 @@ kbdapi_event_result_t LEDManager::kbdif_led_effect_change_event_cb( void * p_ins
 
 const kbdif_handlers_t LEDManager::kbdif_handlers =
 {
+    .command_event_cb = kbdif_command_event_cb,
     .led_layer_change_event_cb = kbdif_led_layer_change_event_cb,
     .led_effect_change_event_cb = kbdif_led_effect_change_event_cb,
 };
+
+
+/****************************************************/
+/*             Command Event Processes              */
+/****************************************************/
+
+kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
+{
+    enum
+    {
+        MODE,
+        BRIGHTNESS_WIRED,
+        BRIGHTNESS_UG_WIRED,
+        BRIGHTNESS_WIRELESS,
+        BRIGHTNESS_UG_WIRELESS,
+        FADE_EFFECT
+    } subCommand;
+
+    if ( LEDLayers.leds_count_get() == 0 ) return KBDAPI_EVENT_RESULT_IGNORED;
+
+    if (::Focus.handleHelp(p_command, "led.mode\n"
+                                    "led.brightness\n"
+                                    "led.brightnessUG\n"
+                                    "led.brightness.wireless\n"
+                                    "led.brightnessUG.wireless\n"
+                                    "led.fade\n"))
+        return KBDAPI_EVENT_RESULT_IGNORED;
+
+    if (strncmp(p_command, "led.", 4) != 0) return KBDAPI_EVENT_RESULT_IGNORED;
+    if (strcmp(p_command + 4, "mode") == 0)
+        subCommand = MODE;
+    else if (strcmp(p_command + 4, "brightness") == 0)
+        subCommand = BRIGHTNESS_WIRED;
+    else if (strcmp(p_command + 4, "brightnessUG") == 0)
+        subCommand = BRIGHTNESS_UG_WIRED;
+    else if (strcmp(p_command + 4, "brightness.wireless") == 0)
+        subCommand = BRIGHTNESS_WIRELESS;
+    else if (strcmp(p_command + 4, "brightnessUG.wireless") == 0)
+        subCommand = BRIGHTNESS_UG_WIRELESS;
+    else if (strcmp(p_command + 4, "fade") == 0)
+        subCommand = FADE_EFFECT;
+    else
+        return KBDAPI_EVENT_RESULT_IGNORED;
+
+    switch (subCommand)
+    {
+        case BRIGHTNESS_WIRED:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( LEDControl.getBrightness() );
+            }
+            else
+            {
+                uint8_t brightness;
+
+                ::Focus.read(brightness);
+                LEDControl.setBrightness(brightness);
+            }
+            break;
+        }
+        case BRIGHTNESS_UG_WIRED:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( LEDControl.getBrightnessUG() );
+            }
+            else
+            {
+                uint8_t brightness;
+
+                ::Focus.read(brightness);
+                LEDControl.setBrightnessUG(brightness);
+            }
+            break;
+        }
+        case BRIGHTNESS_WIRELESS:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( LEDControl.getBrightnessWireless() );
+            }
+            else
+            {
+                uint8_t brightness;
+
+                ::Focus.read(brightness);
+                LEDControl.setBrightnessWireless(brightness);
+            }
+            break;
+        }
+        case BRIGHTNESS_UG_WIRELESS:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( LEDControl.getBrightnessUGWireless() );
+            }
+            else
+            {
+                uint8_t brightness;
+
+                ::Focus.read(brightness);
+                LEDControl.setBrightnessUGWireless(brightness);
+            }
+            break;
+        }
+        case FADE_EFFECT:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( LEDLayers.fade_effect_is_enabled() );
+            }
+            else
+            {
+                uint8_t fade_effect_enable;
+
+                ::Focus.read(fade_effect_enable);
+
+                LEDControl.fade_effect_save( fade_effect_enable );
+                LEDLayers.fade_effect_setup( fade_effect_enable );
+            }
+        }
+        case MODE:
+        {
+            char peek = ::Focus.peek();
+            if (peek == '\n')
+            {
+                ::Focus.send( p_LEDEffect->type_get() );
+            }
+            else if (peek == 'n')
+            {
+                LEDControl.next_mode();
+            }
+            else if (peek == 'p')
+            {
+                LEDControl.prev_mode();
+            }
+            else
+            {
+                uint8_t mode_id;
+
+                ::Focus.read(mode_id);
+                led_effect_set( (LEDEffect::led_effect_type_t)mode_id );
+            }
+            break;
+        }
+    }
+
+    return KBDAPI_EVENT_RESULT_CONSUMED;
+}
 
 class LEDManager LEDManager;
