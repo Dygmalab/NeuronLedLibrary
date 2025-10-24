@@ -100,6 +100,8 @@ class LEDManager {
     void led_effect_set_id( led_effect_id_t id );
     void led_effect_set_next( void );
     void led_effect_set_previous( void );
+
+    LEDEffect::led_effect_type_t led_effect_get_active_type( void );
     void led_effect_activate( void );
 
     void led_layer_set( kbdapi_led_layer_id_t layer_id );

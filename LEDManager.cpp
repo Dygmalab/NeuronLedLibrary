@@ -64,6 +64,7 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     result = LEDLayers.init( config.layers );
     EXIT_IF_ERR( result, "LEDLayers.init failed" );
 
+    LEDLayers.fade_effect_setup( LEDControl.fade_effect_load() );
 
     /* Initialize the default led effect to be the LEDLayers one */
     p_LEDEffect = &LEDLayers;
