@@ -31,7 +31,7 @@
 #include "LEDEffect-SolidColor-Defy.h"
 #include "LEDEffect-Stalker-Defy.h"
 
-
+#include "LED-Palette-Theme-Defy.h"
 #include "Kaleidoscope-FocusSerial.h"
 //#include "Kaleidoscope-EEPROM-Settings.h"
 #warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
@@ -39,7 +39,7 @@
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
-    &LEDRainbowEffectDefy, &LEDRainbowWaveEffectDefy, &LEDStalkerDefy,
+    &LEDLayers, &LEDRainbowEffectDefy, &LEDRainbowWaveEffectDefy, &LEDStalkerDefy,
     &solidRedDefy, &solidGreenDefy, &solidBlueDefy, &solidWhiteDefy, &solidBlackDefy,
 };
 
@@ -48,8 +48,7 @@ const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_specific =
     &LEDBatteryStatusDefy, &LEDBluetoothPairingDefy,
 };
 
-
-result_t LEDManager::init()
+result_t LEDManager::init( const LEDManager_config_t & config )
 {
     result_t result = RESULT_ERR;
 
@@ -57,7 +56,19 @@ result_t LEDManager::init()
     result = kbdif_initialize( );
     EXIT_IF_ERR( result, "kbdif_initialize failed" );
 
-    _EXIT:
+    /* Initialize the keyscanner communication interface */
+    result = comks_init( );
+    EXIT_IF_ERR( result, "com_ks_init failed" );
+
+    /* Initialize the led layers */
+    result = LEDLayers.init( config.layers );
+    EXIT_IF_ERR( result, "LEDLayers.init failed" );
+
+
+    /* Initialize the default led effect to be the LEDLayers one */
+    p_LEDEffect = &LEDLayers;
+
+_EXIT:
     return result;
 }
 
@@ -209,6 +220,11 @@ void LEDManager::led_effect_reset_prio( void )
     led_effect_activate();
 }
 
+LEDEffect::led_effect_type_t LEDManager::led_effect_get_active_type( void )
+{
+    return ( p_LEDEffect_prio != nullptr ) ? p_LEDEffect_prio->type_get() : p_LEDEffect->type_get();
+}
+
 void LEDManager::led_effect_activate( void )
 {
     if( p_LEDEffect_prio != nullptr )
@@ -225,6 +241,21 @@ void LEDManager::led_effect_refresh( void )
 {
     /* We call the led_effect_activate to refresh the current setup */
     led_effect_activate();
+}
+
+/****************************************************/
+/*         LED Layers control and navigation        */
+/****************************************************/
+
+void LEDManager::led_layer_set( kbdapi_led_layer_id_t layer_id )
+{
+    LEDLayers.active_layer_id_set( layer_id );
+
+    /* Attempt to activate new layer only if the "Layers led effect type is active" */
+    if( led_effect_get_active_type( ) == LEDLayers.type_get() )
+    {
+        led_effect_activate( );
+    }
 }
 
 /****************************************************/
@@ -260,6 +291,8 @@ kbdapi_event_result_t LEDManager::kbdif_command_event_cb( void * p_instance, con
     result = p_LEDManager->command_led_process( p_command );
     EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
+    result = LEDLayers.command_process( p_command );
+    EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
 _EXIT:
     return result;
@@ -267,6 +300,10 @@ _EXIT:
 
 kbdapi_event_result_t LEDManager::kbdif_led_layer_change_event_cb( void * p_instance, kbdapi_led_layer_id_t layer_id )
 {
+    LEDManager * p_LEDManager = ( LEDManager *)p_instance;
+
+    p_LEDManager->led_layer_set( layer_id );
+
     return KBDAPI_EVENT_RESULT_CONSUMED;
 }
 
@@ -316,6 +353,20 @@ const kbdif_handlers_t LEDManager::kbdif_handlers =
 /*             Keyscanner Communication             */
 /****************************************************/
 
+void LEDManager::comks_connected( Packet packet )
+{
+    LEDPaletteThemeDefy.updatePaletteCommunication(packet);
+    LEDLayers.update_map_backlight( packet );
+    LEDLayers.update_map_underglow( packet );
+}
+
+void LEDManager::comks_retry_layers( Packet packet )
+{
+    LEDPaletteThemeDefy.updatePaletteCommunication(packet);
+    LEDLayers.update_map_backlight( packet );
+    LEDLayers.update_map_underglow( packet );
+    led_effect_refresh();
+}
 
 void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness )
 {
@@ -338,6 +389,21 @@ void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bo
     p_message->take_control = take_brightness_control;
     packet.header.device = UNKNOWN;
     Communications.sendPacket( packet );
+}
+
+result_t LEDManager::comks_init( void )
+{
+    Communications.callbacks.bind(CONNECTED,
+                                  ([this](Packet packet) {
+                                    comks_connected( packet );
+                                  }));
+
+    Communications.callbacks.bind(RETRY_LAYERS,
+                                  ([this](Packet packet) {
+                                    comks_retry_layers( packet );
+                                  }));
+
+    return RESULT_OK;
 }
 
 /****************************************************/

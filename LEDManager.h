@@ -28,12 +28,29 @@
 
 #include "kbd_if.h"
 #include "LEDEffect.h"
+#include "LEDLayers.h"
 
 class LEDManager {
 
   public:
 
-    result_t init( void );
+    typedef enum : uint8_t
+    {
+        BRIGHTNESS_LED_EFFECT_NONE = 0,
+//        BRIGHTNESS_LED_EFFECT_BATTERY_MANAGMENT = 1,  /* Currently*/
+//        BRIGHTNESS_LED_EFFECT_FADE_EFFECT = 2,
+        BRIGHTNESS_LED_EFFECT_BATTERY_STATUS = 3,
+        BRIGHTNESS_LED_EFFECT_BT_LED_EFFECT = 4,
+    }brightness_led_effect_t;
+
+    typedef struct
+    {
+        LEDLayers::LEDLayers_config_t layers;    /* Configuration of the LED layers */
+    } LEDManager_config_t;
+
+  public:
+
+    result_t init( const LEDManager_config_t & config );
 
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
 
@@ -71,6 +88,9 @@ class LEDManager {
 
     result_t kbdif_initialize( void );
 
+    result_t comks_init( void );
+    void comks_connected( Packet packet );
+    void comks_retry_layers( Packet packet );
     void comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
 
     LEDEffect * led_effect_search_type( const LEDEffect_list_t & effect_list, LEDEffect::led_effect_type_t effect_type );
@@ -82,6 +102,7 @@ class LEDManager {
     void led_effect_set_previous( void );
     void led_effect_activate( void );
 
+    void led_layer_set( kbdapi_led_layer_id_t layer_id );
 
     kbdapi_event_result_t command_led_process( const char * p_command );
 
