@@ -35,6 +35,8 @@ class LEDManager {
 
     result_t init( void );
 
+    void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
+
     void led_effect_set( LEDEffect::led_effect_type_t effect_type );
     void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
     void led_effect_reset_prio( void );
@@ -42,16 +44,34 @@ class LEDManager {
 
   private:
 
+    typedef struct
+    {
+        uint8_t backlight_brightness;
+        uint8_t underglow_brightness;
+        brightness_led_effect_t brightness_led_effect;
+        uint8_t take_control;                       /* Tell KS that we want to take or give brightness control. */
+    } __attribute__((packed)) brightness_message_t;
+
+  private:
+
     typedef int16_t led_effect_id_t;
     typedef std::vector<LEDEffect*> LEDEffect_list_t;
 
     kbdif_t * p_kbdif = NULL;
-    led_effect_id_t LEDEffect_id_regular = 0;
+
+#warning "These will be used when the EEPROM issues are solved"
+//    uint8_t brightness_bl_wired = 0;
+//    uint8_t brightness_bl_wireless = 0;
+//    uint8_t brightness_ug_wired = 0;
+//    uint8_t brightness_ug_wireless = 0;
 
     LEDEffect * p_LEDEffect = nullptr;
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
+    led_effect_id_t LEDEffect_id_regular = 0;
 
     result_t kbdif_initialize( void );
+
+    void comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
 
     LEDEffect * led_effect_search_type( const LEDEffect_list_t & effect_list, LEDEffect::led_effect_type_t effect_type );
     LEDEffect * led_effect_search_type( LEDEffect::led_effect_type_t effect_type );

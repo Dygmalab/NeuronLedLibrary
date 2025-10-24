@@ -62,6 +62,15 @@ result_t LEDManager::init()
 }
 
 /****************************************************/
+/*                    LED Control                   */
+/****************************************************/
+
+void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness )
+{
+    comks_update_brightness( led_effect, take_brightness_control, update_wired_brightness );
+}
+
+/****************************************************/
 /*         LED Effect control and navigation        */
 /****************************************************/
 
@@ -303,6 +312,33 @@ const kbdif_handlers_t LEDManager::kbdif_handlers =
     .led_effect_change_event_cb = kbdif_led_effect_change_event_cb,
 };
 
+/****************************************************/
+/*             Keyscanner Communication             */
+/****************************************************/
+
+
+void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness )
+{
+    Packet packet;
+    packet.header.command = BRIGHTNESS;
+    packet.header.size = 4;
+    brightness_message_t * p_message = (brightness_message_t *)packet.data;
+
+    if ( update_wired_brightness )
+    {
+        p_message->backlight_brightness = LEDControl.getBrightness( );
+        p_message->underglow_brightness = LEDControl.getBrightnessUG( );
+    }
+    else
+    {
+        p_message->backlight_brightness = LEDControl.getBrightnessWireless( );
+        p_message->underglow_brightness = LEDControl.getBrightnessUGWireless( );
+    }
+    p_message->brightness_led_effect = led_effect;
+    p_message->take_control = take_brightness_control;
+    packet.header.device = UNKNOWN;
+    Communications.sendPacket( packet );
+}
 
 /****************************************************/
 /*             Command Event Processes              */
