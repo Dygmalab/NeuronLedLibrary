@@ -37,7 +37,9 @@ class LEDManager {
     typedef enum : uint8_t
     {
         BRIGHTNESS_LED_EFFECT_NONE = 0,
-//        BRIGHTNESS_LED_EFFECT_BATTERY_MANAGMENT = 1,  /* Currently*/
+        /* Currently unused enums. Keeping them because they were specified in past and (possibly) used in communications. Their values
+         * are setting the enum values of still-valid BATTERY_STATUS and BT_LED_EFFECT. */
+//        BRIGHTNESS_LED_EFFECT_BATTERY_MANAGMENT = 1,
 //        BRIGHTNESS_LED_EFFECT_FADE_EFFECT = 2,
         BRIGHTNESS_LED_EFFECT_BATTERY_STATUS = 3,
         BRIGHTNESS_LED_EFFECT_BT_LED_EFFECT = 4,
