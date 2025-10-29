@@ -32,6 +32,8 @@ class LEDPaletteRGBW : public LEDPalette
     /* Constructor */
     LEDPaletteRGBW():LEDPalette() {}
 
+    result_t init( void ) final;
+
   private:
     typedef struct
     {
@@ -44,20 +46,9 @@ class LEDPaletteRGBW : public LEDPalette
     typedef struct
     {
         color_t colors[palette_color_cnt];
-    } PACK palette_raw_t;
+    } PACK color_palette_t;
 
   private:
 
-    /* Palette processing  */
-    void palette_raw_get( palette_raw_t &palette_raw );
-    void update_palette( Packet &packet ) final;
-
-    /* Command processing */
-    void command_report_color( uint8_t color_id ) final;
-    void command_parse_color( uint8_t color_id ) final;
-
-    /* Memory processing */
-    inline uint16_t memory_color_pos( uint8_t color_id );
-    void memory_color_save( uint8_t color_id, color_t color );
-    color_t memory_color_load( uint8_t color_id );
+    color_palette_t color_palette;
 };

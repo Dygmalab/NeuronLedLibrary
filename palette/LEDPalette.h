@@ -35,21 +35,33 @@ class LEDPalette
     /* Constructor */
     explicit LEDPalette( void ) {}
 
-    result_t init( void );
+    virtual result_t init( void );
 
     /* Command processing (external configuration) */
     kbdapi_event_result_t command_process( const char * p_command );
 
     /* Updating the palette in the system  */
-    virtual void update_palette( Packet &packet ) {}
+    void update_palette( Packet &packet );
 
   protected:
 
     static constexpr uint8_t palette_color_cnt = 16;      /* The number of colors in the palette. Currently fixed to 16 due to the 4-bit color id nature */
-    uint16_t palette_memory_pos = 0;
+
+    void * p_color_palette = nullptr;
+    uint16_t color_palette_size;
+    uint8_t color_size = 0;
 
   private:
 
-    virtual void command_report_color( uint8_t color_id ) {}
-    virtual void command_parse_color( uint8_t color_id ) {}
+    uint16_t palette_memory_pos = 0;
+
+    /* Command processing */
+    void command_report_color( uint8_t color_id );
+    void command_parse_color( uint8_t color_id );
+
+    /* Memory processing */
+    inline uint16_t memory_color_pos( uint8_t color_id );
+    void memory_color_save( uint8_t color_id, uint8_t * p_color );
+    void memory_color_load( uint8_t color_id, uint8_t * p_color );
+    void memory_color_palette_load( void );
 };
