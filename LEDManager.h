@@ -29,6 +29,7 @@
 #include "kbd_if.h"
 #include "LEDEffect.h"
 #include "LEDLayers.h"
+#include "LEDTypes.h"
 
 class LEDManager {
 
@@ -69,7 +70,7 @@ class LEDManager {
         uint8_t underglow_brightness;
         brightness_led_effect_t brightness_led_effect;
         uint8_t take_control;                       /* Tell KS that we want to take or give brightness control. */
-    } __attribute__((packed)) brightness_message_t;
+    } PACK brightness_message_t;
 
   private:
 

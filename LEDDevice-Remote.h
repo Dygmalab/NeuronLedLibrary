@@ -25,6 +25,7 @@
 #pragma once
 
 #include "LEDDevice.h"
+#include "LEDTypes.h"
 #include "Communications_protocol.h"
 
 class LEDDeviceRemote : public LEDDevice
@@ -42,13 +43,13 @@ class LEDDeviceRemote : public LEDDevice
     {
         uint8_t first : 4;
         uint8_t second : 4;
-    }__attribute__((packed)) layer_message_color_t;
+    } PACK layer_message_color_t;
 
     typedef struct
     {
         uint8_t layer_id;
         layer_message_color_t colors[];
-    } __attribute__((packed)) layer_message_t;
+    } PACK layer_message_t;
 
   private:
 
