@@ -27,6 +27,7 @@
 #include "kbd_core.h"
 #include "LEDDevice.h"
 #include "LEDEffect.h"
+#include "LEDPalette.h"
 #include "LedModeSerializable-Layer.h"
 #include "LedModeCommunication.h"
 
@@ -71,13 +72,14 @@ class LEDLayers : public LEDEffect,
     uint8_t layers_count = 0;
     uint16_t leds_count = 0;    /* The sum of all LEDs over all LEDDevices */
     uint16_t colormap_memory_pos = 0;
+    uint16_t colormap_memory_size = 0;
 
     LEDLayers_layer_colormap_t layer_colormap;      /* Colormap variable used for providing the layer colors outside of the module */
 
     LEDDevice * led_device_bl_get( Communications_protocol::Devices com_device );
     LEDDevice * led_device_ug_get( Communications_protocol::Devices com_device );
 
-    uint8_t led_color_get( uint8_t layer, uint16_t layer_led_id );
+    uint8_t led_color_get( uint8_t layer_id, uint16_t layer_led_id );
 };
 
 extern class LEDLayers LEDLayers;

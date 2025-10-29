@@ -30,8 +30,8 @@
 #include "LEDEffect-Rainbow-Defy.h"
 #include "LEDEffect-SolidColor-Defy.h"
 #include "LEDEffect-Stalker-Defy.h"
+#include "LEDPalette.h"
 
-#include "LED-Palette-Theme-Defy.h"
 #include "Kaleidoscope-FocusSerial.h"
 //#include "Kaleidoscope-EEPROM-Settings.h"
 #warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
@@ -60,14 +60,51 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     result = comks_init( );
     EXIT_IF_ERR( result, "com_ks_init failed" );
 
+    /* Initialize the led color palette */
+    result = palette_init( config );
+    EXIT_IF_ERR( result, "palette_init failed" );
+
     /* Initialize the led layers */
-    result = LEDLayers.init( config.layers );
-    EXIT_IF_ERR( result, "LEDLayers.init failed" );
+    result = layers_init( config );
+    EXIT_IF_ERR( result, "layers_init failed" );
 
     LEDLayers.fade_effect_setup( LEDControl.fade_effect_load() );
 
     /* Initialize the default led effect to be the LEDLayers one */
     p_LEDEffect = &LEDLayers;
+
+_EXIT:
+    return result;
+}
+
+result_t LEDManager::palette_init( const LEDManager_config_t & config )
+{
+    result_t result = RESULT_ERR;
+
+    ASSERT_DYGMA( config.p_LEDPalette != nullptr, "Missing LEDPalette instance" );
+
+    /* Save the LED Palette instance */
+    p_LEDPalette = config.p_LEDPalette;
+
+    result = p_LEDPalette->init();
+    EXIT_IF_ERR( result, "p_LEDPalette->init failed" );
+
+_EXIT:
+    return result;
+}
+
+result_t LEDManager::layers_init( const LEDManager_config_t & config )
+{
+    result_t result = RESULT_ERR;
+    LEDLayers::LEDLayers_config_t layers_config;
+
+    /* Prepare the LEDLayers configuration */
+    layers_config.p_LEDDevice_list = config.p_LEDDevice_list;
+    layers_config.layers_count = config.layers_count;
+
+    /* Initialize the led layers */
+    result = LEDLayers.init( layers_config );
+    EXIT_IF_ERR( result, "LEDLayers.init failed" );
 
 _EXIT:
     return result;
@@ -292,6 +329,9 @@ kbdapi_event_result_t LEDManager::kbdif_command_event_cb( void * p_instance, con
     result = p_LEDManager->command_led_process( p_command );
     EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
+    result = p_LEDManager->p_LEDPalette->command_process( p_command );
+    EXIT_IF_KBDAPI_NOT_IGNORED( result );
+
     result = LEDLayers.command_process( p_command );
     EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
@@ -356,14 +396,14 @@ const kbdif_handlers_t LEDManager::kbdif_handlers =
 
 void LEDManager::comks_connected( Packet packet )
 {
-    LEDPaletteThemeDefy.updatePaletteCommunication(packet);
+    p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
 }
 
 void LEDManager::comks_retry_layers( Packet packet )
 {
-    LEDPaletteThemeDefy.updatePaletteCommunication(packet);
+    p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
     led_effect_refresh();

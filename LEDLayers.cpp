@@ -24,10 +24,14 @@
 
 #include "LEDLayers.h"
 #include "LEDManager.h"
-#include "LED-Palette-Theme-Defy.h"
 
 #include "Kaleidoscope-FocusSerial.h"
 #include "Kaleidoscope-EEPROM-Settings.h"
+
+#define LEDS_IN_MEMORY_SIZE( layers_count, leds_count ) ( ( ( leds_count * layers_count ) + 1 ) >> 1 )   /* The +1 solves the situation of odd leds count and allocates the last byte correctly */
+
+#define LED_POS( leds_count, layer_id, layer_led_id ) ( ( leds_count * layer_id ) + layer_led_id )
+#define LED_IN_MEMORY_POS( leds_count, layer_id, layer_led_id ) ( LED_POS(leds_count, layer_id, layer_led_id) >> 1 )
 
 result_t LEDLayers::init( const LEDLayers_config_t & config )
 {
@@ -59,8 +63,9 @@ result_t LEDLayers::init( const LEDLayers_config_t & config )
     /* Prepare the layer colormap space */
     layer_colormap.resize( leds_count );
 
-    /* Get the Memory colormap pos */
-    colormap_memory_pos = LEDPaletteThemeDefy.reserveThemes( layers_count );
+    /* Get the Memory colormap pos and allocate the memory space for the colormap */
+    colormap_memory_size = LEDS_IN_MEMORY_SIZE(layers_count, leds_count);
+    colormap_memory_pos = ::EEPROMSettings.requestSlice( colormap_memory_size );
 
     return RESULT_OK;
 }
@@ -173,11 +178,24 @@ void LEDLayers::update_map_underglow( Packet packet )
 /*           LED Layers            */
 /***********************************/
 
-uint8_t LEDLayers::led_color_get( uint8_t layer, uint16_t layer_led_id )
+uint8_t LEDLayers::led_color_get( uint8_t layer_id, uint16_t layer_led_id )
 {
-    uint16_t led_index = ( leds_count * layer ) + layer_led_id;
+    uint16_t led_pos = LED_POS( leds_count, layer_id, layer_led_id );
+    uint16_t led_in_memory_pos = led_pos >> 1;                                 /* Divided by 2 */
+    uint8_t color_id;
 
-    return LEDPaletteThemeDefy.lookupColorIndexAtPosition( colormap_memory_pos, led_index );
+    color_id = kaleidoscope::Runtime.storage( ).read( colormap_memory_pos + led_in_memory_pos );
+
+    if ( led_pos % 2 )
+    {
+        color_id &= ~0xF0;
+    }
+    else
+    {
+        color_id >>= 4;
+    }
+
+    return color_id;
 }
 
 LEDLayers::LEDLayers_layer_colormap_t * LEDLayers::layer_colormap_get( uint8_t layer_id )
@@ -238,11 +256,9 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
         return KBDAPI_EVENT_RESULT_IGNORED;
     }
 
-    uint16_t max_index = ( layers_count * ( leds_count / 2 ) );
-
     if ( ::Focus.isEOL( ) )
     {
-        for ( uint16_t pos = 0; pos < max_index; pos++ )
+        for ( uint16_t pos = 0; pos < colormap_memory_size; pos++ )
         {
             uint8_t indexes = kaleidoscope::Runtime.storage( ).read( colormap_memory_pos + pos );
 
@@ -254,7 +270,7 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
 
     uint16_t pos = 0;
 
-    while ( !::Focus.isEOL( ) && ( pos < max_index ) )
+    while ( !::Focus.isEOL( ) && ( pos < colormap_memory_size ) )
     {
         uint8_t idx1, idx2;
         ::Focus.read( idx1 );

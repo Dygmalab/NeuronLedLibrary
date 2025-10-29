@@ -29,6 +29,7 @@
 #include "kbd_if.h"
 #include "LEDEffect.h"
 #include "LEDLayers.h"
+#include "LEDPalette.h"
 #include "LEDTypes.h"
 
 class LEDManager {
@@ -48,12 +49,19 @@ class LEDManager {
 
     typedef struct
     {
-        LEDLayers::LEDLayers_config_t layers;    /* Configuration of the LED layers */
+        /* Palette */
+        LEDPalette * p_LEDPalette;               /* The instance of the palette for the current project */
+
+        /* Layers and Colormap */
+        const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
+        uint8_t layers_count;                       /* Number of layers to be operated */
     } LEDManager_config_t;
 
   public:
 
     result_t init( const LEDManager_config_t & config );
+    result_t palette_init( const LEDManager_config_t & config );
+    result_t layers_init( const LEDManager_config_t & config );
 
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
 
@@ -77,7 +85,9 @@ class LEDManager {
     typedef int16_t led_effect_id_t;
     typedef std::vector<LEDEffect*> LEDEffect_list_t;
 
-    kbdif_t * p_kbdif = NULL;
+    kbdif_t * p_kbdif = nullptr;
+
+    LEDPalette * p_LEDPalette = nullptr;
 
 #warning "These will be used when the EEPROM issues are solved"
 //    uint8_t brightness_bl_wired = 0;
