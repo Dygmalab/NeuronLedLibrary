@@ -116,21 +116,26 @@ _EXIT:
 
 void LEDManager::leds_enable( void )
 {
-    leds_enabled = true;
+    leds_enabled_flag = true;
 
     comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
 }
 
 void LEDManager::leds_disable( void )
 {
-    leds_enabled = false;
+    leds_enabled_flag = false;
 
     comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
 }
 
+bool_t LEDManager::leds_enabled( void )
+{
+    return leds_enabled_flag;
+}
+
 void LEDManager::com_mode_set( bool_t wireless )
 {
-    com_mode_wired = wireless;
+    com_mode_wired_flag = wireless;
 }
 
 void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
@@ -441,12 +446,12 @@ void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bo
     packet.header.size = 4;
     brightness_message_t * p_message = (brightness_message_t *)packet.data;
 
-    if ( leds_enabled == false )
+    if ( leds_enabled_flag == false )
     {
         p_message->backlight_brightness = 0;
         p_message->underglow_brightness = 0;
     }
-    else if ( com_mode_wired == true )
+    else if ( com_mode_wired_flag == true )
     {
         p_message->backlight_brightness = LEDControl.getBrightness( );
         p_message->underglow_brightness = LEDControl.getBrightnessUG( );

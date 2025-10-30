@@ -66,6 +66,7 @@ class LEDManager {
     void com_mode_set( bool_t wired );
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
 
+    bool_t leds_enabled( void );
     void led_effect_set( LEDEffect::led_effect_type_t effect_type );
     void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
     void led_effect_reset_prio( void );
@@ -100,8 +101,8 @@ class LEDManager {
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
 
-    bool_t leds_enabled = false;
-    bool_t com_mode_wired = true;
+    bool_t leds_enabled_flag = false;
+    bool_t com_mode_wired_flag = true;
 
     result_t kbdif_initialize( void );
 
