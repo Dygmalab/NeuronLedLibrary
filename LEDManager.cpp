@@ -533,6 +533,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 ::Focus.read(brightness);
                 LEDControl.setBrightness(brightness);
+
+                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -548,6 +550,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessUG(brightness);
+
+                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -563,6 +567,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessWireless(brightness);
+
+                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -578,6 +584,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessUGWireless(brightness);
+
+                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
