@@ -31,6 +31,7 @@
 #include "LEDLayers.h"
 #include "LEDPalette.h"
 #include "LEDTypes.h"
+#include "Time_counter.h"
 
 class LEDManager {
 
@@ -72,7 +73,15 @@ class LEDManager {
     void led_effect_reset_prio( void );
     void led_effect_refresh( void );
 
+    void run( void );
+
   private:
+
+    typedef enum
+    {
+        LED_MANAGER_STATE_IDLE = 1,
+        LED_MANAGER_STATE_BRIGHTNESS_UPDATE,
+    } led_manager_state_t;
 
     typedef struct
     {
@@ -82,13 +91,12 @@ class LEDManager {
         uint8_t take_control;                       /* Tell KS that we want to take or give brightness control. */
     } PACK brightness_message_t;
 
-  private:
-
     typedef int16_t led_effect_id_t;
     typedef std::vector<LEDEffect*> LEDEffect_list_t;
 
-    kbdif_t * p_kbdif = nullptr;
+  private:
 
+    kbdif_t * p_kbdif = nullptr;
     LEDPalette * p_LEDPalette = nullptr;
 
 #warning "These will be used when the EEPROM issues are solved"
@@ -104,6 +112,9 @@ class LEDManager {
     bool_t leds_enabled_flag = false;
     bool_t com_mode_wired_flag = true;
 
+    brightness_led_effect_t brightness_led_effect = BRIGHTNESS_LED_EFFECT_NONE;
+    bool_t brightness_take_control = false;
+
     result_t kbdif_initialize( void );
 
     void leds_enable( void );
@@ -112,7 +123,7 @@ class LEDManager {
     result_t comks_init( void );
     void comks_connected( Packet packet );
     void comks_retry_layers( Packet packet );
-    void comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
+    void comks_update_brightness( void );
 
     LEDEffect * led_effect_search_type( const LEDEffect_list_t & effect_list, LEDEffect::led_effect_type_t effect_type );
     LEDEffect * led_effect_search_type( LEDEffect::led_effect_type_t effect_type );
@@ -129,7 +140,26 @@ class LEDManager {
 
     kbdapi_event_result_t command_led_process( const char * p_command );
 
+    /****************************************************/
+    /*                     Machine                      */
+    /****************************************************/
+
   private:
+
+#define BRIGHTNESS_UPDATE_TIMEOUT_MS    20
+
+    led_manager_state_t machine_state = LED_MANAGER_STATE_IDLE;
+    dl_timer_t brightnes_update_timer = 0;
+
+    bool_t brightnes_update_flag = false;
+
+    INLINE void machine_state_set( led_manager_state_t state );
+    INLINE void machine_state_idle( void );
+    INLINE void machine_state_brightness_update( void );
+    INLINE void machine( void );
+
+  private:
+
     static const kbdif_handlers_t kbdif_handlers;
     static const LEDEffect_list_t LEDEffect_list_regular;
     static const LEDEffect_list_t LEDEffect_list_specific;

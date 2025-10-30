@@ -118,14 +118,14 @@ void LEDManager::leds_enable( void )
 {
     leds_enabled_flag = true;
 
-    comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
+    update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
 }
 
 void LEDManager::leds_disable( void )
 {
     leds_enabled_flag = false;
 
-    comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
+    update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
 }
 
 bool_t LEDManager::leds_enabled( void )
@@ -140,7 +140,18 @@ void LEDManager::com_mode_set( bool_t wireless )
 
 void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
 {
-    comks_update_brightness( led_effect, take_brightness_control );
+    /*
+     * NOTE: Instead of directly sending the brightness message, we set a timeout for which we wait if there come other
+     *       brightness requests. This is for preventing possible led flickering due to high-rate brightness changes.
+     */
+
+    /* Save the brightness control flags */
+    brightness_led_effect = led_effect;
+    brightness_take_control = take_brightness_control;
+
+    /* Request the Update of the brightness after the timeout elapses */
+    timer_set_ms( &brightnes_update_timer, BRIGHTNESS_UPDATE_TIMEOUT_MS );
+    brightnes_update_flag = true;
 }
 
 /****************************************************/
@@ -439,7 +450,7 @@ void LEDManager::comks_retry_layers( Packet packet )
     led_effect_refresh();
 }
 
-void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
+void LEDManager::comks_update_brightness( void )
 {
     Packet packet;
     packet.header.command = BRIGHTNESS;
@@ -461,8 +472,8 @@ void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bo
         p_message->backlight_brightness = LEDControl.getBrightnessWireless( );
         p_message->underglow_brightness = LEDControl.getBrightnessUGWireless( );
     }
-    p_message->brightness_led_effect = led_effect;
-    p_message->take_control = take_brightness_control;
+    p_message->brightness_led_effect = brightness_led_effect;
+    p_message->take_control = brightness_take_control;
     packet.header.device = UNKNOWN;
     Communications.sendPacket( packet );
 }
@@ -539,7 +550,7 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
                 ::Focus.read(brightness);
                 LEDControl.setBrightness(brightness);
 
-                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
+                update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -556,7 +567,7 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessUG(brightness);
 
-                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
+                update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -573,7 +584,7 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessWireless(brightness);
 
-                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
+                update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -590,7 +601,7 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
                 ::Focus.read(brightness);
                 LEDControl.setBrightnessUGWireless(brightness);
 
-                comks_update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
+                update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
             break;
         }
@@ -637,6 +648,60 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
     }
 
     return KBDAPI_EVENT_RESULT_CONSUMED;
+}
+
+/****************************************************/
+/*                     Machine                      */
+/****************************************************/
+
+INLINE void LEDManager::machine_state_set( led_manager_state_t state )
+{
+    machine_state = state;
+}
+
+INLINE void LEDManager::machine_state_idle( void )
+{
+    if( brightnes_update_flag == true && timer_check( &brightnes_update_timer ) == true )
+    {
+        brightnes_update_flag = false;
+        machine_state_set( LED_MANAGER_STATE_BRIGHTNESS_UPDATE );
+    }
+}
+
+INLINE void LEDManager::machine_state_brightness_update( void )
+{
+    /* Update the brightness and return to the IDLE state */
+    comks_update_brightness();
+    machine_state_set( LED_MANAGER_STATE_IDLE );
+}
+
+INLINE void LEDManager::machine( void )
+{
+    switch( machine_state )
+    {
+        case LED_MANAGER_STATE_IDLE:
+
+            machine_state_idle();
+
+            break;
+
+        case LED_MANAGER_STATE_BRIGHTNESS_UPDATE:
+
+            machine_state_brightness_update();
+
+            break;
+
+        default:
+
+            ASSERT_DYGMA( false, "Unhandled led_manager_state_t state" );
+
+            break;
+    }
+}
+
+void LEDManager::run( void )
+{
+    machine();
 }
 
 class LEDManager LEDManager;
