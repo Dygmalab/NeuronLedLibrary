@@ -63,7 +63,8 @@ class LEDManager {
     result_t palette_init( const LEDManager_config_t & config );
     result_t layers_init( const LEDManager_config_t & config );
 
-    void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
+    void com_mode_set( bool_t wired );
+    void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
 
     void led_effect_set( LEDEffect::led_effect_type_t effect_type );
     void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
@@ -99,12 +100,14 @@ class LEDManager {
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
 
+    bool_t com_mode_wired = true;
+
     result_t kbdif_initialize( void );
 
     result_t comks_init( void );
     void comks_connected( Packet packet );
     void comks_retry_layers( Packet packet );
-    void comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness );
+    void comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
 
     LEDEffect * led_effect_search_type( const LEDEffect_list_t & effect_list, LEDEffect::led_effect_type_t effect_type );
     LEDEffect * led_effect_search_type( LEDEffect::led_effect_type_t effect_type );

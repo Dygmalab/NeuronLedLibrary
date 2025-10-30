@@ -114,9 +114,16 @@ _EXIT:
 /*                    LED Control                   */
 /****************************************************/
 
-void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness )
 {
-    comks_update_brightness( led_effect, take_brightness_control, update_wired_brightness );
+
+void LEDManager::com_mode_set( bool_t wireless )
+{
+    com_mode_wired = wireless;
+}
+
+void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
+{
+    comks_update_brightness( led_effect, take_brightness_control );
 }
 
 /****************************************************/
@@ -409,14 +416,14 @@ void LEDManager::comks_retry_layers( Packet packet )
     led_effect_refresh();
 }
 
-void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control, bool_t update_wired_brightness )
+void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
 {
     Packet packet;
     packet.header.command = BRIGHTNESS;
     packet.header.size = 4;
     brightness_message_t * p_message = (brightness_message_t *)packet.data;
 
-    if ( update_wired_brightness )
+    else if ( com_mode_wired == true )
     {
         p_message->backlight_brightness = LEDControl.getBrightness( );
         p_message->underglow_brightness = LEDControl.getBrightnessUG( );
