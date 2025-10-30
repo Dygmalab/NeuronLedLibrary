@@ -619,11 +619,11 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
             }
             else if (peek == 'n')
             {
-                LEDControl.next_mode();
+                led_effect_set_next();
             }
             else if (peek == 'p')
             {
-                LEDControl.prev_mode();
+                led_effect_set_previous();
             }
             else
             {
