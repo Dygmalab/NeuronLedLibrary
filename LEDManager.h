@@ -100,9 +100,13 @@ class LEDManager {
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
 
+    bool_t leds_enabled = false;
     bool_t com_mode_wired = true;
 
     result_t kbdif_initialize( void );
+
+    void leds_enable( void );
+    void leds_disable( void );
 
     result_t comks_init( void );
     void comks_connected( Packet packet );

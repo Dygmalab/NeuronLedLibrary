@@ -114,7 +114,19 @@ _EXIT:
 /*                    LED Control                   */
 /****************************************************/
 
+void LEDManager::leds_enable( void )
 {
+    leds_enabled = true;
+
+    comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
+}
+
+void LEDManager::leds_disable( void )
+{
+    leds_enabled = false;
+
+    comks_update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
+}
 
 void LEDManager::com_mode_set( bool_t wireless )
 {
@@ -365,9 +377,15 @@ kbdapi_event_result_t LEDManager::kbdif_led_effect_change_event_cb( void * p_ins
             break;
 
         case KBDAPI_LED_EFFECT_ACTION_DISABLE:
+
+            p_LEDManager->leds_disable();
+
             break;
 
         case KBDAPI_LED_EFFECT_ACTION_ENABLE:
+
+            p_LEDManager->leds_enable();
+
             break;
 
         case KBDAPI_LED_EFFECT_ACTION_NEXT:
@@ -423,6 +441,11 @@ void LEDManager::comks_update_brightness( brightness_led_effect_t led_effect, bo
     packet.header.size = 4;
     brightness_message_t * p_message = (brightness_message_t *)packet.data;
 
+    if ( leds_enabled == false )
+    {
+        p_message->backlight_brightness = 0;
+        p_message->underglow_brightness = 0;
+    }
     else if ( com_mode_wired == true )
     {
         p_message->backlight_brightness = LEDControl.getBrightness( );
