@@ -77,12 +77,6 @@ class LEDManager {
 
   private:
 
-    typedef enum
-    {
-        LED_MANAGER_STATE_IDLE = 1,
-        LED_MANAGER_STATE_BRIGHTNESS_UPDATE,
-    } led_manager_state_t;
-
     typedef struct
     {
         uint8_t backlight_brightness;
@@ -147,6 +141,12 @@ class LEDManager {
   private:
 
 #define BRIGHTNESS_UPDATE_TIMEOUT_MS    20
+
+    typedef enum
+    {
+        LED_MANAGER_STATE_IDLE = 1,
+        LED_MANAGER_STATE_BRIGHTNESS_UPDATE,
+    } led_manager_state_t;
 
     led_manager_state_t machine_state = LED_MANAGER_STATE_IDLE;
     dl_timer_t brightnes_update_timer = 0;
