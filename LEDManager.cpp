@@ -36,6 +36,7 @@
 //#include "Kaleidoscope-EEPROM-Settings.h"
 #warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
 #include "LEDControlDygma.h"
+#include "IdleLEDsDygma.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
@@ -55,6 +56,10 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     /* Initialize the keyboard interface */
     result = kbdif_initialize( );
     EXIT_IF_ERR( result, "kbdif_initialize failed" );
+
+    /* Initialize the Idle LEDs */
+    result = idleleds_init();
+    EXIT_IF_ERR( result, "idleleds_init failed" );
 
     /* Initialize the keyscanner communication interface */
     result = comks_init( );
@@ -364,6 +369,9 @@ kbdapi_event_result_t LEDManager::kbdif_command_event_cb( void * p_instance, con
     result = p_LEDManager->command_led_process( p_command );
     EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
+    result = p_LEDManager->command_idleleds_process( p_command );
+    EXIT_IF_KBDAPI_NOT_IGNORED( result );
+
     result = p_LEDManager->p_LEDPalette->command_process( p_command );
     EXIT_IF_KBDAPI_NOT_IGNORED( result );
 
@@ -648,6 +656,111 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
     }
 
     return KBDAPI_EVENT_RESULT_CONSUMED;
+}
+
+kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_command )
+{
+    /*
+        idleleds.time_limit         --> Set power off time for LEDs, when the n2 is in USB mode [seconds].
+        idleleds.wireless           --> Set power off time for LEDs, when the n2 is in BLE mode [seconds].
+        idleleds.true_sleep         --> Activate/Deactivate put to sleep the keyboard sides [bool].
+        idleleds.true_sleep_time    --> Set the time to put sleep the keyboard sides [seconds].
+     */
+
+    if (::Focus.handleHelp(p_command, "idleleds.true_sleep\nidleleds.true_sleep_time\nidleleds.time_limit\nidleleds.wireless"))
+    {
+        return KBDAPI_EVENT_RESULT_IGNORED;
+    }
+
+    if (strncmp(p_command, "idleleds.", 9) != 0)
+    {
+        return KBDAPI_EVENT_RESULT_IGNORED;
+    }
+
+    if (strcmp(p_command + 9, "true_sleep") == 0)
+    {
+        if (::Focus.isEOL())
+        {
+            uint8_t enabled = ( idleleds.true_sleep_enabled == true ) ? 1 : 0;
+            ::Focus.send( enabled );
+        }
+        else
+        {
+            uint8_t enabled;
+            ::Focus.read(enabled);
+
+            idleleds.true_sleep_enabled = ( enabled == 0 ) ? false : true;
+            PersistentIdleDygmaLEDs.true_sleep_save( idleleds.true_sleep_enabled );
+        }
+    }
+
+    if (strcmp(p_command + 9, "true_sleep_time") == 0)
+    {
+        if (::Focus.isEOL())
+        {
+            uint16_t true_sleep = idleleds.true_sleep_time_ms / 1000;   /* Convert from ms to seconds. */
+            ::Focus.send( true_sleep );
+        }
+        else
+        {
+            uint16_t true_sleep;
+            ::Focus.read(true_sleep);
+
+            idleleds.true_sleep_time_ms = true_sleep * 1000;  /* Convert from seconds to ms. */
+            PersistentIdleDygmaLEDs.true_sleep_time_ms_save( idleleds.true_sleep_time_ms );
+        }
+    }
+
+    if (strcmp(p_command + 9, "time_limit") == 0)
+    {
+        if (::Focus.isEOL())
+        {
+            uint16_t idle_time = idleleds.leds_off_wired_time_ms / 1000;    /* Convert from ms to seconds. */
+            ::Focus.send( idle_time );
+        }
+        else
+        {
+            uint16_t idle_time;
+            ::Focus.read(idle_time);
+
+            idleleds.leds_off_wired_time_ms = idle_time * 1000;  /* Convert from seconds to ms. */
+            PersistentIdleDygmaLEDs.leds_off_wired_time_ms_save( idleleds.leds_off_wired_time_ms );
+        }
+    }
+
+    if (strcmp(p_command + 9, "wireless") == 0)
+    {
+        if (::Focus.isEOL())
+        {
+            uint16_t idle_time_wireless = idleleds.leds_off_wireless_time_ms / 1000;    /* Convert from ms to seconds. */
+            ::Focus.send( idle_time_wireless );
+        }
+        else
+        {
+            uint16_t idle_time_wireless;
+            ::Focus.read(idle_time_wireless);
+
+            idleleds.leds_off_wireless_time_ms = idle_time_wireless * 1000; /* Convert from seconds to ms. */
+            PersistentIdleDygmaLEDs.leds_off_wireless_time_ms_save( idleleds.leds_off_wireless_time_ms );
+        }
+        return KBDAPI_EVENT_RESULT_CONSUMED;
+    }
+
+    return KBDAPI_EVENT_RESULT_CONSUMED;
+}
+
+/****************************************************/
+/*                    Idle Leds                     */
+/****************************************************/
+
+result_t LEDManager::idleleds_init( void )
+{
+    idleleds.true_sleep_enabled = PersistentIdleDygmaLEDs.true_sleep_load();                        /* Flag signaling if the true sleep is enabled */
+    idleleds.true_sleep_time_ms = PersistentIdleDygmaLEDs.true_sleep_time_ms_save();                /* Timeout in miliseconds until the device goes to sleep */
+    idleleds.leds_off_wired_time_ms = PersistentIdleDygmaLEDs.leds_off_wired_time_ms_save();        /* Timeout in miliseconds until the device switches off the leds when working wired */
+    idleleds.leds_off_wireless_time_ms = PersistentIdleDygmaLEDs.leds_off_wireless_time_ms_save();  /* Timeout in miliseconds until the device switches off the leds when working wireless */
+
+    return RESULT_OK;
 }
 
 /****************************************************/

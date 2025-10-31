@@ -133,6 +133,26 @@ class LEDManager {
     void led_layer_set( kbdapi_led_layer_id_t layer_id );
 
     kbdapi_event_result_t command_led_process( const char * p_command );
+    kbdapi_event_result_t command_idleleds_process( const char * p_command );
+
+
+    /****************************************************/
+    /*                    Idle Leds                     */
+    /****************************************************/
+
+  private:
+
+    typedef struct
+    {
+        bool true_sleep_enabled;            /* Flag signaling if the true sleep is enabled */
+        uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
+        uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
+        uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
+    } idleleds_t;
+
+    idleleds_t idleleds;
+
+    result_t idleleds_init( void );
 
     /****************************************************/
     /*                     Machine                      */
