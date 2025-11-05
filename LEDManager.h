@@ -67,7 +67,11 @@ class LEDManager {
     void com_mode_set( bool_t wired );
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
 
+    void leds_enable( void );
+    void leds_disable( void );
+    void leds_toggle( void );
     bool_t leds_enabled( void );
+
     void led_effect_set( LEDEffect::led_effect_type_t effect_type );
     void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
     void led_effect_reset_prio( void );
@@ -110,9 +114,6 @@ class LEDManager {
     bool_t brightness_take_control = false;
 
     result_t kbdif_initialize( void );
-
-    void leds_enable( void );
-    void leds_disable( void );
 
     result_t comks_init( void );
     void comks_connected( Packet packet );

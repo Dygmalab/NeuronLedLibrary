@@ -133,6 +133,18 @@ void LEDManager::leds_disable( void )
     update_brightness( BRIGHTNESS_LED_EFFECT_NONE, true );
 }
 
+void LEDManager::leds_toggle( void )
+{
+    if( leds_enabled_flag == true )
+    {
+        leds_disable();
+    }
+    else
+    {
+        leds_enable();
+    }
+}
+
 bool_t LEDManager::leds_enabled( void )
 {
     return leds_enabled_flag;
@@ -430,6 +442,12 @@ kbdapi_event_result_t LEDManager::kbdif_led_effect_change_event_cb( void * p_ins
         case KBDAPI_LED_EFFECT_ACTION_ENABLE:
 
             p_LEDManager->leds_enable();
+
+            break;
+
+        case KBDAPI_LED_EFFECT_ACTION_TOGGLE:
+
+            p_LEDManager->leds_toggle();
 
             break;
 
