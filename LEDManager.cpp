@@ -268,6 +268,11 @@ void LEDManager::led_effect_set_id( led_effect_id_t id )
 
 void LEDManager::led_effect_set_next( void )
 {
+    if( leds_enabled_flag == false )
+    {
+        return;
+    }
+
     /* Check if there is a priority LED effect currenty active */
     if( p_LEDEffect_prio != nullptr )
     {
@@ -285,6 +290,11 @@ void LEDManager::led_effect_set_next( void )
 
 void LEDManager::led_effect_set_previous( void )
 {
+    if( leds_enabled_flag == false )
+    {
+        return;
+    }
+
     /* Check if there is a priority LED effect currenty active */
     if( p_LEDEffect_prio != nullptr )
     {
