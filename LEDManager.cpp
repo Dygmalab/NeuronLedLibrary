@@ -155,8 +155,8 @@ void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t t
     brightness_take_control = take_brightness_control;
 
     /* Request the Update of the brightness after the timeout elapses */
-    timer_set_ms( &brightnes_update_timer, BRIGHTNESS_UPDATE_TIMEOUT_MS );
-    brightnes_update_flag = true;
+    timer_set_ms( &brightness_update_timer, BRIGHTNESS_UPDATE_TIMEOUT_MS );
+    brightness_update_flag = true;
 }
 
 /****************************************************/
@@ -774,9 +774,9 @@ INLINE void LEDManager::machine_state_set( led_manager_state_t state )
 
 INLINE void LEDManager::machine_state_idle( void )
 {
-    if( brightnes_update_flag == true && timer_check( &brightnes_update_timer ) == true )
+    if( brightness_update_flag == true && timer_check( &brightness_update_timer ) == true )
     {
-        brightnes_update_flag = false;
+        brightness_update_flag = false;
         machine_state_set( LED_MANAGER_STATE_BRIGHTNESS_UPDATE );
     }
 }

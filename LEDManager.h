@@ -169,9 +169,9 @@ class LEDManager {
     } led_manager_state_t;
 
     led_manager_state_t machine_state = LED_MANAGER_STATE_IDLE;
-    dl_timer_t brightnes_update_timer = 0;
+    dl_timer_t brightness_update_timer = 0;
 
-    bool_t brightnes_update_flag = false;
+    bool_t brightness_update_flag = false;
 
     INLINE void machine_state_set( led_manager_state_t state );
     INLINE void machine_state_idle( void );
