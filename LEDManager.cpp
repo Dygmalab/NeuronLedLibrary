@@ -140,7 +140,14 @@ bool_t LEDManager::leds_enabled( void )
 
 void LEDManager::com_mode_set( bool_t wireless )
 {
+    bool_t com_mode_changed = ( com_mode_wired_flag != wireless ) ? true : false;
+
     com_mode_wired_flag = wireless;
+
+    if( com_mode_changed == true )
+    {
+        idleleds_reset();
+    }
 }
 
 void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
@@ -203,7 +210,7 @@ LEDEffect * LEDManager::led_effect_search_type( LEDEffect::led_effect_type_t eff
     return nullptr;
 }
 
-void LEDManager::led_effect_set_type( LEDEffect::led_effect_type_t effect_type, bool prio )
+void LEDManager::led_effect_set_type( LEDEffect::led_effect_type_t effect_type, bool_t prio )
 {
     LEDEffect * p_led_effect;
 
@@ -361,6 +368,20 @@ _EXIT:
     return result;
 }
 
+kbdapi_event_result_t LEDManager::kbdif_key_event_cb( void * p_instance, kbdapi_key_t * p_key )
+{
+    LEDManager * p_LEDManager = ( LEDManager *)p_instance;
+
+    if ( p_LEDManager->idleleds_state == IDLELEDS_STATE_OFF )
+    {
+        p_LEDManager->leds_enable();
+    }
+
+    p_LEDManager->idleleds_reset_timer();
+
+    return KBDAPI_EVENT_RESULT_IGNORED;
+}
+
 kbdapi_event_result_t LEDManager::kbdif_command_event_cb( void * p_instance, const char * p_command )
 {
     LEDManager * p_LEDManager = ( LEDManager *)p_instance;
@@ -434,6 +455,7 @@ kbdapi_event_result_t LEDManager::kbdif_led_effect_change_event_cb( void * p_ins
 
 const kbdif_handlers_t LEDManager::kbdif_handlers =
 {
+    .key_event_cb = kbdif_key_event_cb,
     .command_event_cb = kbdif_command_event_cb,
     .led_layer_change_event_cb = kbdif_led_layer_change_event_cb,
     .led_effect_change_event_cb = kbdif_led_effect_change_event_cb,
@@ -485,6 +507,18 @@ void LEDManager::comks_update_brightness( void )
     packet.header.device = UNKNOWN;
     Communications.sendPacket( packet );
 }
+
+void LEDManager::comks_sleep_send( void )
+{
+    Packet packet;
+
+    packet.header.command = SLEEP;
+    packet.header.device = UNKNOWN;
+    packet.header.size = 0;
+
+    Communications.sendPacket( packet );
+}
+
 
 result_t LEDManager::comks_init( void )
 {
@@ -753,14 +787,149 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
 /*                    Idle Leds                     */
 /****************************************************/
 
-result_t LEDManager::idleleds_init( void )
+INLINE result_t LEDManager::idleleds_init( void )
 {
     idleleds.true_sleep_enabled = PersistentIdleDygmaLEDs.true_sleep_load();                        /* Flag signaling if the true sleep is enabled */
     idleleds.true_sleep_time_ms = PersistentIdleDygmaLEDs.true_sleep_time_ms_save();                /* Timeout in miliseconds until the device goes to sleep */
     idleleds.leds_off_wired_time_ms = PersistentIdleDygmaLEDs.leds_off_wired_time_ms_save();        /* Timeout in miliseconds until the device switches off the leds when working wired */
     idleleds.leds_off_wireless_time_ms = PersistentIdleDygmaLEDs.leds_off_wireless_time_ms_save();  /* Timeout in miliseconds until the device switches off the leds when working wireless */
 
+    /* After startup, we are in OFF state, waiting for an external event */
+    idleleds_state_set_off( false );
+
     return RESULT_OK;
+}
+
+INLINE void LEDManager::idleleds_reset( void )
+{
+    /* After reset, we set the OFF state. */
+    idleleds_state_set_off( false );
+}
+
+INLINE void LEDManager::idleleds_reset_timer( void )
+{
+    timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
+}
+
+INLINE void LEDManager::idleleds_state_set( idleleds_state_t state )
+{
+    idleleds_state = state;
+}
+
+void LEDManager::idleleds_state_set_on( void )
+{
+    idleleds_leds_off_enabled = false;
+    idleleds_timeout_ms = 0;
+
+    if( com_mode_wired_flag == true && idleleds.leds_off_wired_time_ms != 0 )
+    {
+        idleleds_leds_off_enabled = true;
+        idleleds_timeout_ms = idleleds.leds_off_wired_time_ms;
+    }
+    else if( com_mode_wired_flag == false && idleleds.leds_off_wireless_time_ms != 0 )
+    {
+        idleleds_leds_off_enabled = true;
+        idleleds_timeout_ms = idleleds.leds_off_wireless_time_ms;
+    }
+
+    /* Set the idle leds timeout and move to the ON state */
+    timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
+    idleleds_state_set( IDLELEDS_STATE_ON );
+}
+
+void LEDManager::idleleds_state_set_off( bool_t forced )
+{
+    idleleds_state_t state_off_type = ( forced == true ) ? IDLELEDS_STATE_OFF_FORCED : IDLELEDS_STATE_OFF;
+
+    /* In wired mode, the true sleep is not set */
+    idleleds_true_sleep_enabled = ( com_mode_wired_flag == false ) ? idleleds.true_sleep_enabled : false;
+    idleleds_timeout_ms = idleleds.true_sleep_time_ms;
+
+    /* Set the true sleep timeout and move to the OFF state */
+    timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
+    idleleds_state_set( state_off_type );
+}
+
+INLINE void LEDManager::idleleds_state_on( void )
+{
+    if( leds_enabled_flag == false )
+    {
+        /* The LEDs were disabled externally to this state machine - immediately move to the forced OFF state */
+        idleleds_state_set_off( true );
+        return;
+    }
+    else if( idleleds_leds_off_enabled == false || timer_check( &idleleds_timer ) == false )
+    {
+        return;
+    }
+
+    /* Disable the leds */
+    leds_disable();
+
+    /* Move to the OFF state */
+    idleleds_state_set_off( false );
+}
+
+INLINE void LEDManager::idleleds_state_off( void )
+{
+    if( leds_enabled_flag == true )
+    {
+        /* Move to the ON state */
+        idleleds_state_set_on();
+        return;
+    }
+    else if( idleleds_true_sleep_enabled == false || timer_check( &idleleds_timer ) == false )
+    {
+        return;
+    }
+
+    /* Send the True Sleep command */
+    comks_sleep_send();
+
+    idleleds_state_set( IDLELEDS_STATE_TRUE_SLEEP );
+}
+
+INLINE void LEDManager::idleleds_state_true_sleep( void )
+{
+    if( leds_enabled_flag == false )
+    {
+        return;
+    }
+
+    /* Move to the ON state */
+    idleleds_state_set_on();
+}
+
+INLINE void LEDManager::idleleds_machine( void )
+{
+    switch( idleleds_state )
+    {
+
+        case IDLELEDS_STATE_ON:
+
+            idleleds_state_on();
+
+            break;
+
+        case IDLELEDS_STATE_OFF:
+        case IDLELEDS_STATE_OFF_FORCED:
+
+            idleleds_state_off();
+
+            break;
+
+        case IDLELEDS_STATE_TRUE_SLEEP:
+
+            idleleds_state_true_sleep();
+
+            break;
+
+        default:
+
+            ASSERT_DYGMA( false, "Unhandled Idle LEDs state" );
+
+            break;
+    }
 }
 
 /****************************************************/
@@ -814,6 +983,7 @@ INLINE void LEDManager::machine( void )
 
 void LEDManager::run( void )
 {
+    idleleds_machine();
     machine();
 }
 

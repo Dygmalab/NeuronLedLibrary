@@ -118,11 +118,12 @@ class LEDManager {
     void comks_connected( Packet packet );
     void comks_retry_layers( Packet packet );
     void comks_update_brightness( void );
+    void comks_sleep_send( void );
 
     LEDEffect * led_effect_search_type( const LEDEffect_list_t & effect_list, LEDEffect::led_effect_type_t effect_type );
     LEDEffect * led_effect_search_type( LEDEffect::led_effect_type_t effect_type );
 
-    void led_effect_set_type( LEDEffect::led_effect_type_t effect_type, bool prio );
+    void led_effect_set_type( LEDEffect::led_effect_type_t effect_type, bool_t prio );
     void led_effect_set_id( led_effect_id_t id );
     void led_effect_set_next( void );
     void led_effect_set_previous( void );
@@ -142,17 +143,42 @@ class LEDManager {
 
   private:
 
+    typedef enum
+    {
+        IDLELEDS_STATE_ON = 1,
+        IDLELEDS_STATE_OFF,
+        IDLELEDS_STATE_OFF_FORCED,
+        IDLELEDS_STATE_TRUE_SLEEP,
+    } idleleds_state_t;
+
     typedef struct
     {
-        bool true_sleep_enabled;            /* Flag signaling if the true sleep is enabled */
+        bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
         uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
         uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
         uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
     } idleleds_t;
 
     idleleds_t idleleds;
+    idleleds_state_t idleleds_state = IDLELEDS_STATE_OFF;
+    bool_t idleleds_true_sleep_enabled = false;
+    bool_t idleleds_leds_off_enabled = false;
 
-    result_t idleleds_init( void );
+    dl_timer_t idleleds_timer = 0;
+    uint32_t idleleds_timeout_ms = 0;
+
+    INLINE result_t idleleds_init( void );
+    INLINE void idleleds_reset( void );
+    INLINE void idleleds_reset_timer( void );
+
+    INLINE void idleleds_state_set( idleleds_state_t state );
+    void idleleds_state_set_on( void );
+    void idleleds_state_set_off( bool_t forced );
+
+    INLINE void idleleds_state_on( void );
+    INLINE void idleleds_state_off( void );
+    INLINE void idleleds_state_true_sleep( void );
+    INLINE void idleleds_machine( void );
 
     /****************************************************/
     /*                     Machine                      */
@@ -184,6 +210,7 @@ class LEDManager {
     static const LEDEffect_list_t LEDEffect_list_regular;
     static const LEDEffect_list_t LEDEffect_list_specific;
 
+    static kbdapi_event_result_t kbdif_key_event_cb( void * p_instance, kbdapi_key_t * p_key );
     static kbdapi_event_result_t kbdif_command_event_cb( void * p_instance, const char * p_command );
     static kbdapi_event_result_t kbdif_led_layer_change_event_cb( void * p_instance, kbdapi_led_layer_id_t layer_id );
     static kbdapi_event_result_t kbdif_led_effect_change_event_cb( void * p_instance, kbdapi_led_effect_action_t action );
