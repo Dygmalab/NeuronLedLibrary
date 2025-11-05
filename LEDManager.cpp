@@ -162,6 +162,11 @@ void LEDManager::com_mode_set( bool_t wireless )
     }
 }
 
+void LEDManager::com_new_connection_set( void )
+{
+    idleleds_new_connection = true;
+}
+
 void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control )
 {
     /*
@@ -553,6 +558,7 @@ result_t LEDManager::comks_init( void )
     Communications.callbacks.bind(CONNECTED,
                                   ([this](Packet packet) {
                                     comks_connected( packet );
+                                    idleleds_connected_handle();
                                   }));
 
     Communications.callbacks.bind(RETRY_LAYERS,
@@ -837,6 +843,16 @@ INLINE void LEDManager::idleleds_reset( void )
 INLINE void LEDManager::idleleds_reset_timer( void )
 {
     timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
+}
+
+INLINE void LEDManager::idleleds_connected_handle( void )
+{
+    /* Handle the new connection situation */
+    if( idleleds_new_connection == true )
+    {
+        idleleds_new_connection = false;
+        idleleds_reset_timer();
+    }
 }
 
 INLINE void LEDManager::idleleds_state_set( idleleds_state_t state )

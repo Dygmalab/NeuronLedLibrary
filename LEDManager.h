@@ -65,6 +65,7 @@ class LEDManager {
     result_t layers_init( const LEDManager_config_t & config );
 
     void com_mode_set( bool_t wired );
+    void com_new_connection_set( void );
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
 
     void leds_enable( void );
@@ -164,6 +165,7 @@ class LEDManager {
     idleleds_state_t idleleds_state = IDLELEDS_STATE_OFF;
     bool_t idleleds_true_sleep_enabled = false;
     bool_t idleleds_leds_off_enabled = false;
+    bool_t idleleds_new_connection = false;
 
     dl_timer_t idleleds_timer = 0;
     uint32_t idleleds_timeout_ms = 0;
@@ -171,6 +173,7 @@ class LEDManager {
     INLINE result_t idleleds_init( void );
     INLINE void idleleds_reset( void );
     INLINE void idleleds_reset_timer( void );
+    INLINE void idleleds_connected_handle( void );
 
     INLINE void idleleds_state_set( idleleds_state_t state );
     void idleleds_state_set_on( void );
