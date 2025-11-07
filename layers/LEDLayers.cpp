@@ -231,6 +231,11 @@ void LEDLayers::active_layer_id_set( kbdapi_led_layer_id_t layer_id )
 
 void LEDLayers::activate(void)
 {
+    /* If the host is not connected, the layers will not be activated */
+    if( Communications.is_host_connected() == false )
+    {
+        return;
+    }
     sendLedMode(led_mode);
 }
 
