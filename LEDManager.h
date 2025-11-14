@@ -58,6 +58,15 @@ class LEDManager {
         uint8_t layers_count;                       /* Number of layers to be operated */
     } LEDManager_config_t;
 
+    typedef struct PACK
+    {
+        bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
+        uint8_t reserve[3];                 /* Reserve space to fit the legacy size in the memory */
+        uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
+        uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
+        uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
+    } idleleds_conf_t;
+
   public:
 
     result_t init( const LEDManager_config_t & config );
@@ -95,6 +104,8 @@ class LEDManager {
 
   private:
 
+    const uint8_t * p_fade_effect_conf;
+
     kbdif_t * p_kbdif = nullptr;
     LEDPalette * p_LEDPalette = nullptr;
 
@@ -115,6 +126,13 @@ class LEDManager {
     bool_t brightness_take_control = false;
 
     result_t kbdif_initialize( void );
+
+    void cfgmem_fade_effect_config_save( uint8_t fade_effect );
+    void cfgmem_idleleds_config_save( const idleleds_conf_t * p_idleleds_conf );
+    void cfgmem_idleleds_true_sleep_enabled_save( bool_t true_sleep_enabled );
+    void cfgmem_idleleds_true_sleep_time_ms_save( uint32_t true_sleep_time_ms );
+    void cfgmem_idleleds_leds_off_wired_time_ms_save( uint32_t leds_off_wired_time_ms );
+    void cfgmem_idleleds_leds_off_wireless_time_ms_save( uint32_t leds_off_wireless_time_ms );
 
     result_t comks_init( void );
     void comks_connected( Packet packet );
@@ -153,15 +171,15 @@ class LEDManager {
         IDLELEDS_STATE_TRUE_SLEEP,
     } idleleds_state_t;
 
-    typedef struct
+    static constexpr idleleds_conf_t idleleds_conf_default =
     {
-        bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
-        uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
-        uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
-        uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
-    } idleleds_t;
+        .true_sleep_enabled = false,
+        .true_sleep_time_ms = 600000,       /* 10 minutes */
+        .leds_off_wired_time_ms = 300000,   /*  5 minutes */
+        .leds_off_wireless_time_ms = 60000, /*  1 minute  */
+    };
 
-    idleleds_t idleleds;
+    const idleleds_conf_t * p_idleleds_conf;
     idleleds_state_t idleleds_state = IDLELEDS_STATE_OFF;
     bool_t idleleds_true_sleep_enabled = false;
     bool_t idleleds_leds_off_enabled = false;

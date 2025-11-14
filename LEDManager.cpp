@@ -22,6 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "Config_manager.h"
 #include "kbd_if_manager.h"
 #include "LEDManager.h"
 
@@ -36,7 +37,6 @@
 //#include "Kaleidoscope-EEPROM-Settings.h"
 #warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
 #include "LEDControlDygma.h"
-#include "IdleLEDsDygma.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
@@ -73,7 +73,16 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     result = layers_init( config );
     EXIT_IF_ERR( result, "layers_init failed" );
 
-    LEDLayers.fade_effect_setup( LEDControl.fade_effect_load() );
+    /* Get the fade effect confuration */
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_FADE_EFFECT, (const void **)&p_fade_effect_conf );
+
+    /* Check if the config is cleared */
+    if( *p_fade_effect_conf == 0xFF )
+    {
+        cfgmem_fade_effect_config_save( 0 );
+    }
+
+    LEDLayers.fade_effect_setup( *p_fade_effect_conf );
 
     /* Initialize the default led effect to be the LEDLayers one */
     p_LEDEffect = &LEDLayers;
@@ -113,6 +122,70 @@ result_t LEDManager::layers_init( const LEDManager_config_t & config )
 
 _EXIT:
     return result;
+}
+
+/****************************************************/
+/*                   Config Memory                  */
+/****************************************************/
+
+void LEDManager::cfgmem_fade_effect_config_save( uint8_t fade_effect )
+{
+    result_t result = RESULT_ERR;
+
+    ConfigManager.config_item_update( p_fade_effect_conf, &fade_effect, sizeof( uint8_t) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_idleleds_config_save( const idleleds_conf_t * p_idleleds_conf )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( p_idleleds_conf, p_idleleds_conf, sizeof( idleleds_conf_t) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_idleleds_true_sleep_enabled_save( bool_t true_sleep_enabled )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_idleleds_conf->true_sleep_enabled, &true_sleep_enabled, sizeof( p_idleleds_conf->true_sleep_enabled) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_idleleds_true_sleep_time_ms_save( uint32_t true_sleep_time_ms )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_idleleds_conf->true_sleep_time_ms, &true_sleep_time_ms, sizeof( p_idleleds_conf->true_sleep_time_ms) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_idleleds_leds_off_wired_time_ms_save( uint32_t leds_off_wired_time_ms )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_idleleds_conf->leds_off_wired_time_ms, &leds_off_wired_time_ms, sizeof( p_idleleds_conf->leds_off_wired_time_ms) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_idleleds_leds_off_wireless_time_ms_save( uint32_t leds_off_wireless_time_ms )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_idleleds_conf->leds_off_wireless_time_ms, &leds_off_wireless_time_ms, sizeof( p_idleleds_conf->leds_off_wireless_time_ms) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
 }
 
 /****************************************************/
@@ -686,7 +759,9 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         {
             if (::Focus.isEOL())
             {
-                ::Focus.send( LEDLayers.fade_effect_is_enabled() );
+                uint8_t fade_effect_enable = LEDLayers.fade_effect_is_enabled();
+
+                ::Focus.send( fade_effect_enable );
             }
             else
             {
@@ -694,7 +769,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 ::Focus.read(fade_effect_enable);
 
-                LEDControl.fade_effect_save( fade_effect_enable );
+                cfgmem_fade_effect_config_save( fade_effect_enable );
+
                 LEDLayers.fade_effect_setup( fade_effect_enable );
             }
         }
@@ -729,6 +805,8 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
 kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_command )
 {
+    result_t result = RESULT_ERR;
+
     /*
         idleleds.time_limit         --> Set power off time for LEDs, when the n2 is in USB mode [seconds].
         idleleds.wireless           --> Set power off time for LEDs, when the n2 is in BLE mode [seconds].
@@ -750,16 +828,17 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
     {
         if (::Focus.isEOL())
         {
-            uint8_t enabled = ( idleleds.true_sleep_enabled == true ) ? 1 : 0;
+            uint8_t enabled = ( p_idleleds_conf->true_sleep_enabled == true ) ? 1 : 0;
             ::Focus.send( enabled );
         }
         else
         {
             uint8_t enabled;
+            bool_t true_sleep_enabled;
             ::Focus.read(enabled);
 
-            idleleds.true_sleep_enabled = ( enabled == 0 ) ? false : true;
-            PersistentIdleDygmaLEDs.true_sleep_save( idleleds.true_sleep_enabled );
+            true_sleep_enabled = ( enabled == 0 ) ? false : true;
+            cfgmem_idleleds_true_sleep_enabled_save( true_sleep_enabled );
         }
     }
 
@@ -767,16 +846,17 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
     {
         if (::Focus.isEOL())
         {
-            uint16_t true_sleep = idleleds.true_sleep_time_ms / 1000;   /* Convert from ms to seconds. */
-            ::Focus.send( true_sleep );
+            uint16_t true_sleep_time_sec = p_idleleds_conf->true_sleep_time_ms / 1000;   /* Convert from ms to seconds. */
+            ::Focus.send( true_sleep_time_sec );
         }
         else
         {
-            uint16_t true_sleep;
-            ::Focus.read(true_sleep);
+            uint16_t true_sleep_time_sec;
+            uint32_t true_sleep_time_ms;
+            ::Focus.read(true_sleep_time_sec);
 
-            idleleds.true_sleep_time_ms = true_sleep * 1000;  /* Convert from seconds to ms. */
-            PersistentIdleDygmaLEDs.true_sleep_time_ms_save( idleleds.true_sleep_time_ms );
+            true_sleep_time_ms = true_sleep_time_sec * 1000;  /* Convert from seconds to ms. */
+            cfgmem_idleleds_true_sleep_time_ms_save( true_sleep_time_ms );
         }
     }
 
@@ -784,16 +864,17 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
     {
         if (::Focus.isEOL())
         {
-            uint16_t idle_time = idleleds.leds_off_wired_time_ms / 1000;    /* Convert from ms to seconds. */
-            ::Focus.send( idle_time );
+            uint16_t leds_off_wired_time_sec = p_idleleds_conf->leds_off_wired_time_ms / 1000;    /* Convert from ms to seconds. */
+            ::Focus.send( leds_off_wired_time_sec );
         }
         else
         {
-            uint16_t idle_time;
-            ::Focus.read(idle_time);
+            uint16_t leds_off_wired_time_sec;
+            uint32_t leds_off_wired_time_ms;
+            ::Focus.read(leds_off_wired_time_sec);
 
-            idleleds.leds_off_wired_time_ms = idle_time * 1000;  /* Convert from seconds to ms. */
-            PersistentIdleDygmaLEDs.leds_off_wired_time_ms_save( idleleds.leds_off_wired_time_ms );
+            leds_off_wired_time_ms = leds_off_wired_time_sec * 1000;  /* Convert from seconds to ms. */
+            cfgmem_idleleds_leds_off_wired_time_ms_save( leds_off_wired_time_ms );
         }
     }
 
@@ -801,21 +882,24 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
     {
         if (::Focus.isEOL())
         {
-            uint16_t idle_time_wireless = idleleds.leds_off_wireless_time_ms / 1000;    /* Convert from ms to seconds. */
-            ::Focus.send( idle_time_wireless );
+            uint16_t leds_off_wireless_time_sec = p_idleleds_conf->leds_off_wireless_time_ms / 1000;    /* Convert from ms to seconds. */
+            ::Focus.send( leds_off_wireless_time_sec );
         }
         else
         {
-            uint16_t idle_time_wireless;
-            ::Focus.read(idle_time_wireless);
+            uint16_t leds_off_wireless_time_sec;
+            uint32_t leds_off_wireless_time_ms;
+            ::Focus.read(leds_off_wireless_time_sec);
 
-            idleleds.leds_off_wireless_time_ms = idle_time_wireless * 1000; /* Convert from seconds to ms. */
-            PersistentIdleDygmaLEDs.leds_off_wireless_time_ms_save( idleleds.leds_off_wireless_time_ms );
+            leds_off_wireless_time_ms = leds_off_wireless_time_sec * 1000; /* Convert from seconds to ms. */
+            cfgmem_idleleds_leds_off_wireless_time_ms_save( leds_off_wireless_time_ms );
         }
         return KBDAPI_EVENT_RESULT_CONSUMED;
     }
 
     return KBDAPI_EVENT_RESULT_CONSUMED;
+
+    UNUSED(result);
 }
 
 /****************************************************/
@@ -824,15 +908,22 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
 
 INLINE result_t LEDManager::idleleds_init( void )
 {
-    idleleds.true_sleep_enabled = PersistentIdleDygmaLEDs.true_sleep_load();                        /* Flag signaling if the true sleep is enabled */
-    idleleds.true_sleep_time_ms = PersistentIdleDygmaLEDs.true_sleep_time_ms_save();                /* Timeout in miliseconds until the device goes to sleep */
-    idleleds.leds_off_wired_time_ms = PersistentIdleDygmaLEDs.leds_off_wired_time_ms_save();        /* Timeout in miliseconds until the device switches off the leds when working wired */
-    idleleds.leds_off_wireless_time_ms = PersistentIdleDygmaLEDs.leds_off_wireless_time_ms_save();  /* Timeout in miliseconds until the device switches off the leds when working wireless */
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_IDLELEDS, (const void **)&p_idleleds_conf );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
+    /* Check if the config is cleared */
+    if( (uint8_t)p_idleleds_conf->true_sleep_enabled == 0xFF )
+    {
+        cfgmem_idleleds_config_save( &idleleds_conf_default );
+    }
 
     /* After startup, we are in OFF state, waiting for an external event */
     idleleds_state_set_off( false );
 
-    return RESULT_OK;
+_EXIT:
+    return result;
 }
 
 INLINE void LEDManager::idleleds_reset( void )
@@ -866,15 +957,15 @@ void LEDManager::idleleds_state_set_on( void )
     idleleds_leds_off_enabled = false;
     idleleds_timeout_ms = 0;
 
-    if( com_mode_wired_flag == true && idleleds.leds_off_wired_time_ms != 0 )
+    if( com_mode_wired_flag == true && p_idleleds_conf->leds_off_wired_time_ms != 0 )
     {
         idleleds_leds_off_enabled = true;
-        idleleds_timeout_ms = idleleds.leds_off_wired_time_ms;
+        idleleds_timeout_ms = p_idleleds_conf->leds_off_wired_time_ms;
     }
-    else if( com_mode_wired_flag == false && idleleds.leds_off_wireless_time_ms != 0 )
+    else if( com_mode_wired_flag == false && p_idleleds_conf->leds_off_wireless_time_ms != 0 )
     {
         idleleds_leds_off_enabled = true;
-        idleleds_timeout_ms = idleleds.leds_off_wireless_time_ms;
+        idleleds_timeout_ms = p_idleleds_conf->leds_off_wireless_time_ms;
     }
 
     /* Set the idle leds timeout and move to the ON state */
@@ -887,8 +978,8 @@ void LEDManager::idleleds_state_set_off( bool_t forced )
     idleleds_state_t state_off_type = ( forced == true ) ? IDLELEDS_STATE_OFF_FORCED : IDLELEDS_STATE_OFF;
 
     /* In wired mode, the true sleep is not set */
-    idleleds_true_sleep_enabled = ( com_mode_wired_flag == false ) ? idleleds.true_sleep_enabled : false;
-    idleleds_timeout_ms = idleleds.true_sleep_time_ms;
+    idleleds_true_sleep_enabled = ( com_mode_wired_flag == false ) ? p_idleleds_conf->true_sleep_enabled : false;
+    idleleds_timeout_ms = p_idleleds_conf->true_sleep_time_ms;
 
     /* Set the true sleep timeout and move to the OFF state */
     timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
