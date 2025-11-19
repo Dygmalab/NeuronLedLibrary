@@ -67,6 +67,15 @@ class LEDManager {
         uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
     } idleleds_conf_t;
 
+    typedef struct PACK
+    {
+        uint8_t wired_backlight;
+        uint8_t wired_underglow;
+        uint8_t wireless_backlight;
+        uint8_t wireless_underglow;
+        uint8_t is_valid;                   /* The valid brightness config when is_valid == 0x00 */
+    } brightness_conf_t;
+
   public:
 
     result_t init( const LEDManager_config_t & config );
@@ -109,12 +118,6 @@ class LEDManager {
     kbdif_t * p_kbdif = nullptr;
     LEDPalette * p_LEDPalette = nullptr;
 
-#warning "These will be used when the EEPROM issues are solved"
-//    uint8_t brightness_bl_wired = 0;
-//    uint8_t brightness_bl_wireless = 0;
-//    uint8_t brightness_ug_wired = 0;
-//    uint8_t brightness_ug_wireless = 0;
-
     LEDEffect * p_LEDEffect = nullptr;
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
@@ -128,11 +131,17 @@ class LEDManager {
     result_t kbdif_initialize( void );
 
     void cfgmem_fade_effect_config_save( uint8_t fade_effect );
-    void cfgmem_idleleds_config_save( const idleleds_conf_t * p_idleleds_conf );
+    void cfgmem_idleleds_config_save( const idleleds_conf_t * p_new_conf );
     void cfgmem_idleleds_true_sleep_enabled_save( bool_t true_sleep_enabled );
     void cfgmem_idleleds_true_sleep_time_ms_save( uint32_t true_sleep_time_ms );
     void cfgmem_idleleds_leds_off_wired_time_ms_save( uint32_t leds_off_wired_time_ms );
     void cfgmem_idleleds_leds_off_wireless_time_ms_save( uint32_t leds_off_wireless_time_ms );
+
+    void cfgmem_brightness_config_save( const brightness_conf_t * p_new_conf );
+    void cfgmem_brightness_wired_backlight_save( uint8_t wired_backlight );
+    void cfgmem_brightness_wired_underglow_save( uint8_t wired_underglow );
+    void cfgmem_brightness_wireless_backlight_save( uint8_t wireless_backlight );
+    void cfgmem_brightness_wireless_underglow_save( uint8_t wireless_underglow );
 
     result_t comks_init( void );
     void comks_connected( Packet packet );
@@ -171,13 +180,7 @@ class LEDManager {
         IDLELEDS_STATE_TRUE_SLEEP,
     } idleleds_state_t;
 
-    static constexpr idleleds_conf_t idleleds_conf_default =
-    {
-        .true_sleep_enabled = false,
-        .true_sleep_time_ms = 600000,       /* 10 minutes */
-        .leds_off_wired_time_ms = 300000,   /*  5 minutes */
-        .leds_off_wireless_time_ms = 60000, /*  1 minute  */
-    };
+    static const idleleds_conf_t idleleds_conf_default;
 
     const idleleds_conf_t * p_idleleds_conf;
     idleleds_state_t idleleds_state = IDLELEDS_STATE_OFF;
@@ -201,6 +204,18 @@ class LEDManager {
     INLINE void idleleds_state_off( void );
     INLINE void idleleds_state_true_sleep( void );
     INLINE void idleleds_machine( void );
+
+    /****************************************************/
+    /*               LED Brightness Leds                */
+    /****************************************************/
+
+  private:
+
+    static const brightness_conf_t brightness_conf_default;
+
+    const brightness_conf_t * p_brightness_conf;
+
+    INLINE result_t brightness_init( void );
 
     /****************************************************/
     /*                     Machine                      */

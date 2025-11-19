@@ -35,8 +35,6 @@
 
 #include "Kaleidoscope-FocusSerial.h"
 //#include "Kaleidoscope-EEPROM-Settings.h"
-#warning "Temporary use of LEDControlDygma outside of the kaleidoscope_adapter"
-#include "LEDControlDygma.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
@@ -47,6 +45,23 @@ const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_specific =
 {
     &LEDBatteryStatusDefy, &LEDBluetoothPairingDefy,
+};
+
+const LEDManager::idleleds_conf_t LEDManager::idleleds_conf_default =
+{
+    .true_sleep_enabled = false,
+    .true_sleep_time_ms = 600000,       /* 10 minutes */
+    .leds_off_wired_time_ms = 300000,   /*  5 minutes */
+    .leds_off_wireless_time_ms = 60000, /*  1 minute  */
+};
+
+const LEDManager::brightness_conf_t LEDManager::brightness_conf_default =
+{
+    .wired_backlight = 255,
+    .wired_underglow = 255,
+    .wireless_backlight = 125,
+    .wireless_underglow = 125,
+    .is_valid = 0x00,                   /* The valid brightness config when is_valid == 0x00 */
 };
 
 result_t LEDManager::init( const LEDManager_config_t & config )
@@ -60,6 +75,10 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     /* Initialize the Idle LEDs */
     result = idleleds_init();
     EXIT_IF_ERR( result, "idleleds_init failed" );
+
+    /* Initialize the LEDs brightness */
+    result = brightness_init();
+    EXIT_IF_ERR( result, "brightness_init failed" );
 
     /* Initialize the keyscanner communication interface */
     result = comks_init( );
@@ -138,11 +157,11 @@ void LEDManager::cfgmem_fade_effect_config_save( uint8_t fade_effect )
     UNUSED( result );
 }
 
-void LEDManager::cfgmem_idleleds_config_save( const idleleds_conf_t * p_idleleds_conf )
+void LEDManager::cfgmem_idleleds_config_save( const idleleds_conf_t * p_new_conf )
 {
     result_t result = RESULT_ERR;
 
-    result = ConfigManager.config_item_update( p_idleleds_conf, p_idleleds_conf, sizeof( idleleds_conf_t) );
+    result = ConfigManager.config_item_update( p_idleleds_conf, p_new_conf, sizeof( idleleds_conf_t) );
     ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
 
     UNUSED( result );
@@ -183,6 +202,56 @@ void LEDManager::cfgmem_idleleds_leds_off_wireless_time_ms_save( uint32_t leds_o
     result_t result = RESULT_ERR;
 
     result = ConfigManager.config_item_update( &p_idleleds_conf->leds_off_wireless_time_ms, &leds_off_wireless_time_ms, sizeof( p_idleleds_conf->leds_off_wireless_time_ms) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_brightness_config_save( const brightness_conf_t * p_new_conf )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( p_brightness_conf, p_new_conf, sizeof( brightness_conf_t) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_brightness_wired_backlight_save( uint8_t wired_backlight )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_brightness_conf->wired_backlight, &wired_backlight, sizeof( p_brightness_conf->wired_backlight) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_brightness_wired_underglow_save( uint8_t wired_underglow )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_brightness_conf->wired_underglow, &wired_underglow, sizeof( p_brightness_conf->wired_underglow) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_brightness_wireless_backlight_save( uint8_t wireless_backlight )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_brightness_conf->wireless_backlight, &wireless_backlight, sizeof( p_brightness_conf->wireless_backlight) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_brightness_wireless_underglow_save( uint8_t wireless_underglow )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_brightness_conf->wireless_underglow, &wireless_underglow, sizeof( p_brightness_conf->wireless_underglow) );
     ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
 
     UNUSED( result );
@@ -601,13 +670,13 @@ void LEDManager::comks_update_brightness( void )
     }
     else if ( com_mode_wired_flag == true )
     {
-        p_message->backlight_brightness = LEDControl.getBrightness( );
-        p_message->underglow_brightness = LEDControl.getBrightnessUG( );
+        p_message->backlight_brightness = p_brightness_conf->wired_backlight;
+        p_message->underglow_brightness = p_brightness_conf->wired_underglow;
     }
     else
     {
-        p_message->backlight_brightness = LEDControl.getBrightnessWireless( );
-        p_message->underglow_brightness = LEDControl.getBrightnessUGWireless( );
+        p_message->backlight_brightness = p_brightness_conf->wireless_backlight;
+        p_message->underglow_brightness = p_brightness_conf->wireless_underglow;
     }
     p_message->brightness_led_effect = brightness_led_effect;
     p_message->take_control = brightness_take_control;
@@ -691,14 +760,14 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         {
             if (::Focus.isEOL())
             {
-                ::Focus.send( LEDControl.getBrightness() );
+                ::Focus.send( p_brightness_conf->wired_backlight );
             }
             else
             {
                 uint8_t brightness;
 
                 ::Focus.read(brightness);
-                LEDControl.setBrightness(brightness);
+                cfgmem_brightness_wired_backlight_save( brightness );
 
                 update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
@@ -708,14 +777,14 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         {
             if (::Focus.isEOL())
             {
-                ::Focus.send( LEDControl.getBrightnessUG() );
+                ::Focus.send( p_brightness_conf->wired_underglow );
             }
             else
             {
                 uint8_t brightness;
 
                 ::Focus.read(brightness);
-                LEDControl.setBrightnessUG(brightness);
+                cfgmem_brightness_wired_underglow_save( brightness );
 
                 update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
@@ -725,14 +794,14 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         {
             if (::Focus.isEOL())
             {
-                ::Focus.send( LEDControl.getBrightnessWireless() );
+                ::Focus.send( p_brightness_conf->wireless_backlight );
             }
             else
             {
                 uint8_t brightness;
 
                 ::Focus.read(brightness);
-                LEDControl.setBrightnessWireless(brightness);
+                cfgmem_brightness_wireless_backlight_save( brightness );
 
                 update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
@@ -742,14 +811,14 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         {
             if (::Focus.isEOL())
             {
-                ::Focus.send( LEDControl.getBrightnessUGWireless() );
+                ::Focus.send( p_brightness_conf->wireless_underglow );
             }
             else
             {
                 uint8_t brightness;
 
                 ::Focus.read(brightness);
-                LEDControl.setBrightnessUGWireless(brightness);
+                cfgmem_brightness_wireless_underglow_save( brightness );
 
                 update_brightness( LEDManager::BRIGHTNESS_LED_EFFECT_NONE, true );
             }
@@ -1066,6 +1135,27 @@ INLINE void LEDManager::idleleds_machine( void )
 
             break;
     }
+}
+
+/****************************************************/
+/*               LED Brightness Leds                */
+/****************************************************/
+
+INLINE result_t LEDManager::brightness_init( void )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_BRIGHTNESS, (const void **)&p_brightness_conf );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
+    /* Check if the config is cleared */
+    if( p_brightness_conf->is_valid != 0xFF )
+    {
+        cfgmem_brightness_config_save( &brightness_conf_default );
+    }
+
+_EXIT:
+    return result;
 }
 
 /****************************************************/
