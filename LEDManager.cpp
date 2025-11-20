@@ -92,7 +92,7 @@ result_t LEDManager::init( const LEDManager_config_t & config )
     result = layers_init( config );
     EXIT_IF_ERR( result, "layers_init failed" );
 
-    /* Get the fade effect confuration */
+    /* Get the fade effect configuration */
     result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_FADE_EFFECT, (const void **)&p_fade_effect_conf );
 
     /* Check if the config is cleared */
@@ -151,7 +151,7 @@ void LEDManager::cfgmem_fade_effect_config_save( uint8_t fade_effect )
 {
     result_t result = RESULT_ERR;
 
-    ConfigManager.config_item_update( p_fade_effect_conf, &fade_effect, sizeof( uint8_t) );
+    result = ConfigManager.config_item_update( p_fade_effect_conf, &fade_effect, sizeof( uint8_t) );
     ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
 
     UNUSED( result );
