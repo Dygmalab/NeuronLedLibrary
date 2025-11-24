@@ -29,12 +29,6 @@
 class LEDPaletteRGB : public LEDPalette
 {
   public:
-    /* Constructor */
-    LEDPaletteRGB():LEDPalette() {}
-
-    result_t init( void ) final;
-
-  private:
     typedef struct
     {
         uint8_t red;
@@ -47,7 +41,14 @@ class LEDPaletteRGB : public LEDPalette
         color_t colors[palette_color_cnt];
     } PACK color_palette_t;
 
-  private:
+    typedef struct
+    {
+        color_palette_t palette;
+    } PACK palette_config_t;
 
-    color_palette_t color_palette;
+  public:
+    /* Constructor */
+    LEDPaletteRGB():LEDPalette() {}
+
+    result_t init( void ) final;
 };

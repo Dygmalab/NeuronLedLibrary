@@ -23,9 +23,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "Config_manager.h"
 #include "LEDManager.h"
 #include "LEDPalette.h"
-#include "EEPROM.h"
 
 #include "Kaleidoscope-FocusSerial.h"
 #include "Kaleidoscope-EEPROM-Settings.h"
@@ -34,7 +34,7 @@
 
 result_t LEDPalette::init( void )
 {
-    palette_memory_pos = ::EEPROMSettings.requestSlice( palette_color_cnt * color_size );
+    palette_memory_pos = ::EEPROMSettings.requestSlice( color_palette_size );
 
     return RESULT_OK;
 }
@@ -43,46 +43,48 @@ result_t LEDPalette::init( void )
 /*        Palette processing       */
 /***********************************/
 
-void LEDPalette::update_palette( Packet &packet )
+void LEDPalette::update_palette_piece( Packet &packet, uint8_t color_id, uint8_t color_cnt )
 {
-    uint8_t * p_packet;
+    uint8_t * p_color;
 
     packet.header.command = Communications_protocol::PALETTE_COLORS;
-    packet.header.size = color_size * 6;
+    packet.header.size = color_size * color_cnt;
 
+    /* Set the first color id */
+    packet.data[0] = color_id;
+
+    /* Fill the color data */
+    p_color = &packet.data[1];
+
+    while( color_cnt != 0 )
+    {
+        memory_color_load( color_id, p_color );
+
+        color_id++;
+        color_cnt--;
+        p_color += color_size;
+    }
+
+    Communications.sendPacket( packet );
+}
+
+void LEDPalette::update_palette( Packet &packet )
+{
     ASSERT_DYGMA( color_size <= 4, "color_size larger than 4 has not been considered so far" );
 
-    memory_color_palette_load();
-
-    packet.data[0] = 0;
-    p_packet = (uint8_t *)PALETTE_COLOR_GET( packet.data[0] );
-    memcpy( &packet.data[1], p_packet, packet.header.size );
-    Communications.sendPacket( packet );
-
-    packet.data[0] = 6;
-    p_packet = (uint8_t *)PALETTE_COLOR_GET( packet.data[0] );
-    memcpy( &packet.data[1], p_packet, packet.header.size );
-    Communications.sendPacket( packet );
-
-    packet.header.size = color_size * 4;
-    packet.data[0] = 12;
-    p_packet = (uint8_t *)PALETTE_COLOR_GET( packet.data[0] );
-    memcpy( &packet.data[1], p_packet, packet.header.size );
-    Communications.sendPacket( packet );
+    update_palette_piece( packet, 0, 6 );
+    update_palette_piece( packet, 6, 6 );
+    update_palette_piece( packet, 12, 4 );
 }
 
 /***********************************/
 /*        Memory processing        */
 /***********************************/
 
-inline uint16_t LEDPalette::memory_color_pos( uint8_t color_id )
-{
-    return ( palette_memory_pos + ( color_id * color_size ) );
-}
-
 void LEDPalette::memory_color_save( uint8_t color_id, uint8_t * p_color )
 {
     uint8_t i;
+    const void * p_color_config = PALETTE_COLOR_GET( color_id );
 
     /* NOTE: We keep the XOR to assure backward compatibility with the old memory processing */
     for( i = 0; i < color_size; i++ )
@@ -90,31 +92,20 @@ void LEDPalette::memory_color_save( uint8_t color_id, uint8_t * p_color )
         p_color[i] ^= 0xFF;
     }
 
-    EEPROM.put( memory_color_pos( color_id ), p_color, color_size );
+    cfgmem_color_save( p_color_config, p_color );
 }
 
 void LEDPalette::memory_color_load( uint8_t color_id, uint8_t * p_color )
 {
     uint8_t i;
+    const void * p_color_config = PALETTE_COLOR_GET( color_id );
 
-    EEPROM.get( memory_color_pos( color_id ), p_color, color_size );
+    memcpy( p_color, p_color_config, color_size );
 
     /* NOTE: We keep the XOR to assure backward compatibility with the old memory processing */
     for( i = 0; i < color_size; i++ )
     {
         p_color[i] ^= 0xFF;
-    }
-}
-
-void LEDPalette::memory_color_palette_load( void )
-{
-    uint8_t color_id;
-    uint8_t * p_color;
-
-    for ( color_id = 0; color_id < palette_color_cnt; color_id++ )
-    {
-        p_color = (uint8_t *)PALETTE_COLOR_GET( color_id );
-        memory_color_load( color_id, p_color );
     }
 }
 
@@ -185,4 +176,18 @@ kbdapi_event_result_t LEDPalette::command_process( const char * p_command )
 
     LEDManager.led_effect_refresh();
     return KBDAPI_EVENT_RESULT_CONSUMED;
+}
+
+/****************************************************/
+/*                   Config Memory                  */
+/****************************************************/
+
+void LEDPalette::cfgmem_color_save( const void * p_color_config, void * p_color )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( p_color_config, p_color, color_size );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
 }

@@ -41,13 +41,15 @@ class LEDPalette
     kbdapi_event_result_t command_process( const char * p_command );
 
     /* Updating the palette in the system  */
+    void update_palette_piece( Packet &packet, uint8_t color_id, uint8_t color_cnt );
     void update_palette( Packet &packet );
 
   protected:
 
     static constexpr uint8_t palette_color_cnt = 16;      /* The number of colors in the palette. Currently fixed to 16 due to the 4-bit color id nature */
 
-    void * p_color_palette = nullptr;
+    const void * p_color_palette = nullptr;
+#warning "Once the EEPROM is solved, the color_palette_size will be obsolete"
     uint16_t color_palette_size;
     uint8_t color_size = 0;
 
@@ -60,8 +62,8 @@ class LEDPalette
     void command_parse_color( uint8_t color_id );
 
     /* Memory processing */
-    inline uint16_t memory_color_pos( uint8_t color_id );
     void memory_color_save( uint8_t color_id, uint8_t * p_color );
     void memory_color_load( uint8_t color_id, uint8_t * p_color );
-    void memory_color_palette_load( void );
+
+    void cfgmem_color_save( const void * p_color_config, void * p_color );
 };

@@ -22,14 +22,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "Config_manager.h"
 #include "LEDPaletteRGB.h"
 
 result_t LEDPaletteRGB::init( void )
 {
     result_t result = RESULT_ERR;
+    const palette_config_t * p_palette_config;
 
-    p_color_palette = &color_palette;
-    color_palette_size = sizeof( color_palette );
+    /* Load the LED palette config */
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_PALETTE, (const void **)&p_palette_config );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
+    p_color_palette = &p_palette_config->palette;
+    color_palette_size = sizeof( color_palette_t );
     color_size = sizeof( color_t );
 
     result = LEDPalette::init();
