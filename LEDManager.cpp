@@ -133,7 +133,6 @@ result_t LEDManager::layers_init( const LEDManager_config_t & config )
 
     /* Prepare the LEDLayers configuration */
     layers_config.p_LEDDevice_list = config.p_LEDDevice_list;
-    layers_config.layers_count = config.layers_count;
 
     /* Initialize the led layers */
     result = LEDLayers.init( layers_config );

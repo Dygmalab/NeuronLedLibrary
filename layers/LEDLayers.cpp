@@ -22,26 +22,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "Config_manager.h"
 #include "LEDLayers.h"
 #include "LEDManager.h"
 
 #include "Kaleidoscope-FocusSerial.h"
 #include "Kaleidoscope-EEPROM-Settings.h"
 
-#define LEDS_IN_MEMORY_SIZE( layers_count, leds_count ) ( ( ( leds_count * layers_count ) + 1 ) >> 1 )   /* The +1 solves the situation of odd leds count and allocates the last byte correctly */
-
-#define LED_POS( leds_count, layer_id, layer_led_id ) ( ( leds_count * layer_id ) + layer_led_id )
-#define LED_IN_MEMORY_POS( leds_count, layer_id, layer_led_id ) ( LED_POS(leds_count, layer_id, layer_led_id) >> 1 )
+#define LED_POS( layer_id, layer_led_id ) ( ( APP_LEDS_CNT * layer_id ) + layer_led_id )
+#define COLORMAP_DICOLOR_POS( layer_id, layer_led_id ) ( LED_POS(layer_id, layer_led_id) >> 1 )
 
 result_t LEDLayers::init( const LEDLayers_config_t & config )
 {
+    result_t result = RESULT_ERR;
+
     LEDDevice * p_LEDDevice;
     uint16_t device_leds_count;
     uint16_t ledmap_pos = 0;
+    uint16_t leds_count = 0;
     uint16_t i;
 
     p_LEDDevice_list = config.p_LEDDevice_list;
-    layers_count = config.layers_count;
 
     /* Process the device list */
     for( i = 0; i < p_LEDDevice_list->size(); i++ )
@@ -60,24 +61,37 @@ result_t LEDLayers::init( const LEDLayers_config_t & config )
         ledmap_pos += device_leds_count;
     }
 
+    if( leds_count != APP_LEDS_CNT )
+    {
+        ASSERT_DYGMA( false, "Inconsistent LEDDevice_list configuration" );
+        return RESULT_ERR;
+    }
+
     /* Prepare the layer colormap space */
     layer_colormap.resize( leds_count );
 
+    /* Get the colormap configuration */
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_COLORMAP, (const void **)&p_colormap_conf );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
     /* Get the Memory colormap pos and allocate the memory space for the colormap */
-    colormap_memory_size = LEDS_IN_MEMORY_SIZE(layers_count, leds_count);
+#warning "Remove this when the EEPROM is finished"
+#define LEDS_IN_MEMORY_SIZE( layers_count, leds_count ) ( ( ( leds_count * layers_count ) + 1 ) >> 1 )
+    colormap_memory_size = LEDS_IN_MEMORY_SIZE(APP_LAYERS_CNT, leds_count);
     colormap_memory_pos = ::EEPROMSettings.requestSlice( colormap_memory_size );
 
-    return RESULT_OK;
+_EXIT:
+    return result;
 }
 
 uint8_t LEDLayers::layers_count_get( void )
 {
-    return layers_count;
+    return APP_LAYERS_CNT;
 }
 
 uint16_t LEDLayers::leds_count_get( void )
 {
-    return leds_count;
+    return APP_LEDS_CNT;
 }
 
 void LEDLayers::fade_effect_setup( bool_t enable )
@@ -180,22 +194,21 @@ void LEDLayers::update_map_underglow( Packet packet )
 
 uint8_t LEDLayers::led_color_get( uint8_t layer_id, uint16_t layer_led_id )
 {
-    uint16_t led_pos = LED_POS( leds_count, layer_id, layer_led_id );
-    uint16_t led_in_memory_pos = led_pos >> 1;                                 /* Divided by 2 */
-    uint8_t color_id;
+    uint16_t led_pos = LED_POS( layer_id, layer_led_id );
+    uint16_t colormap_dicolor_pos = COLORMAP_DICOLOR_POS( layer_id, layer_led_id );
+    const colormap_dicolor_t * p_dicolor;
 
-    color_id = kaleidoscope::Runtime.storage( ).read( colormap_memory_pos + led_in_memory_pos );
+    /* Get the dicolor */
+    p_dicolor = &p_colormap_conf->dicolors[colormap_dicolor_pos];
 
     if ( led_pos % 2 )
     {
-        color_id &= ~0xF0;
+        return p_dicolor->second;
     }
     else
     {
-        color_id >>= 4;
+        return p_dicolor->first;
     }
-
-    return color_id;
 }
 
 LEDLayers::LEDLayers_layer_colormap_t * LEDLayers::layer_colormap_get( uint8_t layer_id )
@@ -203,7 +216,7 @@ LEDLayers::LEDLayers_layer_colormap_t * LEDLayers::layer_colormap_get( uint8_t l
     uint16_t led_id;
 
     ASSERT_DYGMA( layer_id < layers_count, "LEDLayers layer_id exceeds the actual number of layers" );
-    if( layer_id >= layers_count )
+    if( layer_id >= APP_LAYERS_CNT )
     {
         /* Nullify the colormap */
         std::fill(layer_colormap.begin(), layer_colormap.end(), 0);
@@ -246,7 +259,7 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
 {
     const char *expected_command = "colormap.map";
 
-    if ( leds_count == 0 )
+    if ( APP_LEDS_CNT == 0 )
     {
         return KBDAPI_EVENT_RESULT_IGNORED;
     }
@@ -263,31 +276,31 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
 
     if ( ::Focus.isEOL( ) )
     {
-        for ( uint16_t pos = 0; pos < colormap_memory_size; pos++ )
+        for( uint16_t i = 0; i < COLORMAP_DICOLORS_CNT; i++ )
         {
-            uint8_t indexes = kaleidoscope::Runtime.storage( ).read( colormap_memory_pos + pos );
-
-            ::Focus.send( ( uint8_t )( indexes >> 4 ), indexes & ~0xf0 );
+            const colormap_dicolor_t * p_dicolor = &p_colormap_conf->dicolors[i];
+            ::Focus.send( p_dicolor->first, p_dicolor->second );
         }
 
         return KBDAPI_EVENT_RESULT_CONSUMED;
     }
 
-    uint16_t pos = 0;
+    uint16_t dicolor_id = 0;
 
-    while ( !::Focus.isEOL( ) && ( pos < colormap_memory_size ) )
+    while ( !::Focus.isEOL( ) && ( dicolor_id < COLORMAP_DICOLORS_CNT ) )
     {
-        uint8_t idx1, idx2;
-        ::Focus.read( idx1 );
-        ::Focus.read( idx2 );
+        uint8_t color1, color2;
+        colormap_dicolor_t dicolor;
+        ::Focus.read( color1 );
+        ::Focus.read( color2 );
 
-        uint8_t indexes = ( idx1 << 4 ) + idx2;
+        dicolor.first = color1;
+        dicolor.second = color2;
 
-        kaleidoscope::Runtime.storage( ).update( colormap_memory_pos + pos, indexes );
-        pos++;
+        cfgmem_dicolor_save( dicolor_id, &dicolor );
+
+        dicolor_id++;
     }
-
-    kaleidoscope::Runtime.storage().commit();
 
     auto const &keyScanner = kaleidoscope::Runtime.device().keyScanner();
     auto deviceLeft = keyScanner.leftHandDevice();
@@ -303,6 +316,20 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
     LEDManager.led_effect_refresh();
 
     return KBDAPI_EVENT_RESULT_CONSUMED;
+}
+
+/****************************************************/
+/*                   Config Memory                  */
+/****************************************************/
+
+void LEDLayers::cfgmem_dicolor_save( uint16_t dicolor_id, colormap_dicolor_t * p_dicolor )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_colormap_conf->dicolors[dicolor_id], p_dicolor, sizeof(colormap_dicolor_t) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
 }
 
 class LEDLayers LEDLayers;

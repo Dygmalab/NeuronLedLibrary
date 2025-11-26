@@ -25,6 +25,7 @@
 #pragma once
 
 #include "kbd_core.h"
+#include "keyboard_config.h"
 #include "LEDDevice.h"
 #include "LEDEffect.h"
 #include "LEDPalette.h"
@@ -35,10 +36,23 @@ class LEDLayers : public LEDEffect,
                   public LedModeCommunication {
 
   public:
+    #define COLORMAP_DICOLORS_CNT   ( ( ( APP_LEDS_CNT * APP_LAYERS_CNT ) + 1 ) >> 1 )   /* The +1 solves the situation of odd leds count and allocates the last byte correctly */
+
+    typedef struct
+    {
+        uint8_t first : 4;
+        uint8_t second : 4;
+    } PACK colormap_dicolor_t;
+
+    typedef struct
+    {
+        colormap_dicolor_t dicolors[ COLORMAP_DICOLORS_CNT ];
+    } PACK colormap_config_t;
+
+  public:
     typedef struct
     {
         const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
-        uint8_t layers_count;                       /* Number of layers to be operated */
     } LEDLayers_config_t;
 
     typedef std::vector<uint8_t> LEDLayers_layer_colormap_t;
@@ -68,9 +82,9 @@ class LEDLayers : public LEDEffect,
     kbdapi_event_result_t command_process( const char * p_command );
 
   private:
+    const colormap_config_t * p_colormap_conf = nullptr;
+
     const LEDDevice_list_t * p_LEDDevice_list;
-    uint8_t layers_count = 0;
-    uint16_t leds_count = 0;    /* The sum of all LEDs over all LEDDevices */
     uint16_t colormap_memory_pos = 0;
     uint16_t colormap_memory_size = 0;
 
@@ -80,6 +94,8 @@ class LEDLayers : public LEDEffect,
     LEDDevice * led_device_ug_get( Communications_protocol::Devices com_device );
 
     uint8_t led_color_get( uint8_t layer_id, uint16_t layer_led_id );
+
+    void cfgmem_dicolor_save( uint16_t dicolor_id, colormap_dicolor_t * p_dicolor );
 };
 
 extern class LEDLayers LEDLayers;

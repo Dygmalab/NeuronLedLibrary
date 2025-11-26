@@ -55,7 +55,6 @@ class LEDManager {
 
         /* Layers and Colormap */
         const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
-        uint8_t layers_count;                       /* Number of layers to be operated */
     } LEDManager_config_t;
 
     typedef struct PACK
