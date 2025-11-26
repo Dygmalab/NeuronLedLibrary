@@ -45,17 +45,19 @@ class LEDPalette
     void update_palette( Packet &packet );
 
   protected:
-
+    static constexpr uint8_t color_size_max = 4;          /* Maximum size of color currently supported */
     static constexpr uint8_t palette_color_cnt = 16;      /* The number of colors in the palette. Currently fixed to 16 due to the 4-bit color id nature */
 
     const void * p_color_palette = nullptr;
 #warning "Once the EEPROM is solved, the color_palette_size will be obsolete"
     uint16_t color_palette_size;
-    uint8_t color_size = 0;
+
+    result_t init( uint8_t color_size );
 
   private:
 
     uint16_t palette_memory_pos = 0;
+    uint8_t color_size = 0;
 
     /* Command processing */
     void command_report_color( uint8_t color_id );

@@ -36,9 +36,8 @@ result_t LEDPaletteRGB::init( void )
 
     p_color_palette = &p_palette_config->palette;
     color_palette_size = sizeof( color_palette_t );
-    color_size = sizeof( color_t );
 
-    result = LEDPalette::init();
+    result = LEDPalette::init( sizeof( color_t ) );
     EXIT_IF_ERR( result, "LEDPalette::init failed" );
 
 _EXIT:

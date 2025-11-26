@@ -30,11 +30,30 @@
 #include "Kaleidoscope-FocusSerial.h"
 #include "Kaleidoscope-EEPROM-Settings.h"
 
-#define PALETTE_COLOR_GET( color_id )   ( ( void * )( (uint32_t)p_color_palette + ( color_id * color_size ) ))
+#define PALETTE_COLOR_GET( color_id )   ( ( const void * )( (uint32_t)p_color_palette + ( color_id * color_size ) ))
 
-result_t LEDPalette::init( void )
+result_t LEDPalette::init()
+{
+    if( color_size == 0 || color_size > color_size_max )
+    {
+        ASSERT_DYGMA( false, "Trying to use invalid color size greater than maximum color size" );
+        return RESULT_ERR;
+    }
+
+    return RESULT_OK;
+}
+
+result_t LEDPalette::init( uint8_t color_size )
 {
     palette_memory_pos = ::EEPROMSettings.requestSlice( color_palette_size );
+
+    if( color_size == 0 || color_size > color_size_max )
+    {
+        ASSERT_DYGMA( false, "Trying to set color size greater than maximum color size" );
+        return RESULT_ERR;
+    }
+
+    this->color_size = color_size;
 
     return RESULT_OK;
 }
@@ -116,29 +135,29 @@ void LEDPalette::memory_color_load( uint8_t color_id, uint8_t * p_color )
 void LEDPalette::command_report_color( uint8_t color_id )
 {
     uint8_t i;
-    uint8_t * p_color = (uint8_t *)PALETTE_COLOR_GET( color_id );
+    uint8_t color[color_size_max];
 
     ASSERT_DYGMA( color_id <= palette_color_cnt, "color_id exceeds the number of palette colors" );
 
-    memory_color_load( color_id, p_color );
+    memory_color_load( color_id, color );
 
     for( i = 0; i < color_size; i++ )
     {
-        ::Focus.send( p_color[i] );
+        ::Focus.send( color[i] );
     }
 }
 
 void LEDPalette::command_parse_color( uint8_t color_id )
 {
     uint8_t i;
-    uint8_t * p_color = (uint8_t *)PALETTE_COLOR_GET( color_id );
+    uint8_t color[color_size_max];
 
     for( i = 0; i < color_size; i++ )
     {
-        ::Focus.read( p_color[i] );
+        ::Focus.read( color[i] );
     }
 
-    memory_color_save( color_id, p_color );
+    memory_color_save( color_id, color );
 }
 
 kbdapi_event_result_t LEDPalette::command_process( const char * p_command )

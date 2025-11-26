@@ -71,7 +71,7 @@ void LEDDeviceRemote::update_map( Packet packet )
     LEDLayers::LEDLayers_layer_colormap_t * p_layer_colormap;
     layer_message_t * p_layer_message;
 
-    ASSERT_DYGMA( (sizeof( packet.data ) >= (message_size + 1)), "The LED layer message does not fit into the packet buffer" );
+    ASSERT_DYGMA( ((uint16_t)sizeof( packet.data ) >= (message_size + 1)), "The LED layer message does not fit into the packet buffer" );
 
     for ( layer_id = 0; layer_id < LEDLayers.layers_count_get(); layer_id++ )
     {
