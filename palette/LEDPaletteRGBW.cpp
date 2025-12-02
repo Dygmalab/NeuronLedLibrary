@@ -35,7 +35,6 @@ result_t LEDPaletteRGBW::init( void )
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
 
     p_color_palette = &p_palette_config->palette;
-    color_palette_size = sizeof( color_palette_t );
 
     result = LEDPalette::init( sizeof( color_t ) );
     EXIT_IF_ERR( result, "LEDPalette::init failed" );

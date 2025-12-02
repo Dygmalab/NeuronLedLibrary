@@ -34,7 +34,6 @@
 #include "LEDPalette.h"
 
 #include "Kaleidoscope-FocusSerial.h"
-//#include "Kaleidoscope-EEPROM-Settings.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {

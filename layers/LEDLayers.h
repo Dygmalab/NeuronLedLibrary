@@ -85,8 +85,6 @@ class LEDLayers : public LEDEffect,
     const colormap_config_t * p_colormap_conf = nullptr;
 
     const LEDDevice_list_t * p_LEDDevice_list;
-    uint16_t colormap_memory_pos = 0;
-    uint16_t colormap_memory_size = 0;
 
     LEDLayers_layer_colormap_t layer_colormap;      /* Colormap variable used for providing the layer colors outside of the module */
 

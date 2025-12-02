@@ -49,14 +49,11 @@ class LEDPalette
     static constexpr uint8_t palette_color_cnt = 16;      /* The number of colors in the palette. Currently fixed to 16 due to the 4-bit color id nature */
 
     const void * p_color_palette = nullptr;
-#warning "Once the EEPROM is solved, the color_palette_size will be obsolete"
-    uint16_t color_palette_size;
 
     result_t init( uint8_t color_size );
 
   private:
 
-    uint16_t palette_memory_pos = 0;
     uint8_t color_size = 0;
 
     /* Command processing */

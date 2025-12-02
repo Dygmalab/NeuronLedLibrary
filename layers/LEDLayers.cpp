@@ -27,7 +27,6 @@
 #include "LEDManager.h"
 
 #include "Kaleidoscope-FocusSerial.h"
-#include "Kaleidoscope-EEPROM-Settings.h"
 
 #define LED_POS( layer_id, layer_led_id ) ( ( APP_LEDS_CNT * layer_id ) + layer_led_id )
 #define COLORMAP_DICOLOR_POS( layer_id, layer_led_id ) ( LED_POS(layer_id, layer_led_id) >> 1 )
@@ -73,12 +72,6 @@ result_t LEDLayers::init( const LEDLayers_config_t & config )
     /* Get the colormap configuration */
     result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_COLORMAP, (const void **)&p_colormap_conf );
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
-
-    /* Get the Memory colormap pos and allocate the memory space for the colormap */
-#warning "Remove this when the EEPROM is finished"
-#define LEDS_IN_MEMORY_SIZE( layers_count, leds_count ) ( ( ( leds_count * layers_count ) + 1 ) >> 1 )
-    colormap_memory_size = LEDS_IN_MEMORY_SIZE(APP_LAYERS_CNT, leds_count);
-    colormap_memory_pos = ::EEPROMSettings.requestSlice( colormap_memory_size );
 
 _EXIT:
     return result;

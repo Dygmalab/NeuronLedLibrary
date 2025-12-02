@@ -28,7 +28,6 @@
 #include "LEDPalette.h"
 
 #include "Kaleidoscope-FocusSerial.h"
-#include "Kaleidoscope-EEPROM-Settings.h"
 
 #define PALETTE_COLOR_GET( color_id )   ( ( const void * )( (uint32_t)p_color_palette + ( color_id * color_size ) ))
 
@@ -45,8 +44,6 @@ result_t LEDPalette::init()
 
 result_t LEDPalette::init( uint8_t color_size )
 {
-    palette_memory_pos = ::EEPROMSettings.requestSlice( color_palette_size );
-
     if( color_size == 0 || color_size > color_size_max )
     {
         ASSERT_DYGMA( false, "Trying to set color size greater than maximum color size" );
@@ -186,8 +183,6 @@ kbdapi_event_result_t LEDPalette::command_process( const char * p_command )
         command_parse_color( color_id );
         color_id++;
     }
-
-    kaleidoscope::Runtime.storage( ).commit( );
 
     Packet packet { };
     packet.header.device = UNKNOWN;
