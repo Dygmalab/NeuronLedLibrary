@@ -208,7 +208,7 @@ LEDLayers::LEDLayers_layer_colormap_t * LEDLayers::layer_colormap_get( uint8_t l
 {
     uint16_t led_id;
 
-    ASSERT_DYGMA( layer_id < layers_count, "LEDLayers layer_id exceeds the actual number of layers" );
+    ASSERT_DYGMA( layer_id < APP_LAYERS_CNT, "LEDLayers layer_id exceeds the actual number of layers" );
     if( layer_id >= APP_LAYERS_CNT )
     {
         /* Nullify the colormap */
