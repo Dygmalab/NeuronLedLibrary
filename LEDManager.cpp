@@ -63,7 +63,7 @@ const LEDManager::brightness_conf_t LEDManager::brightness_conf_default =
     .is_valid = 0x00,                   /* The valid brightness config when is_valid == 0x00 */
 };
 
-result_t LEDManager::init( const LEDManager_config_t & config )
+result_t LEDManager::init( const LEDManager_init_config_t & config )
 {
     result_t result = RESULT_ERR;
 
@@ -109,7 +109,7 @@ _EXIT:
     return result;
 }
 
-result_t LEDManager::palette_init( const LEDManager_config_t & config )
+result_t LEDManager::palette_init( const LEDManager_init_config_t & config )
 {
     result_t result = RESULT_ERR;
 
@@ -125,7 +125,7 @@ _EXIT:
     return result;
 }
 
-result_t LEDManager::layers_init( const LEDManager_config_t & config )
+result_t LEDManager::layers_init( const LEDManager_init_config_t & config )
 {
     result_t result = RESULT_ERR;
     LEDLayers::LEDLayers_config_t layers_config;

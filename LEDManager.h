@@ -55,12 +55,11 @@ class LEDManager {
 
         /* Layers and Colormap */
         const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
-    } LEDManager_config_t;
+    } LEDManager_init_config_t;
 
     typedef struct PACK
     {
         bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
-        uint8_t reserve[3];                 /* Reserve space to fit the legacy size in the memory */
         uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
         uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
         uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
@@ -75,11 +74,13 @@ class LEDManager {
         uint8_t is_valid;                   /* The valid brightness config when is_valid == 0x00 */
     } brightness_conf_t;
 
+
+
   public:
 
-    result_t init( const LEDManager_config_t & config );
-    result_t palette_init( const LEDManager_config_t & config );
-    result_t layers_init( const LEDManager_config_t & config );
+    result_t init( const LEDManager_init_config_t & config );
+    result_t palette_init( const LEDManager_init_config_t & config );
+    result_t layers_init( const LEDManager_init_config_t & config );
 
     void com_mode_set( bool_t wired );
     void com_new_connection_set( void );
