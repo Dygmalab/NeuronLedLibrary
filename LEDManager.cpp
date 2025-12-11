@@ -67,6 +67,10 @@ result_t LEDManager::init( const LEDManager_init_config_t & config )
 {
     result_t result = RESULT_ERR;
 
+    /* Load the LEDManager memory-stored configuration */
+    result = cfgmem_config_load();
+    EXIT_IF_ERR( result, "cfgmem_config_load failed" );
+
     /* Initialize the keyboard interface */
     result = kbdif_initialize( );
     EXIT_IF_ERR( result, "kbdif_initialize failed" );
@@ -90,17 +94,6 @@ result_t LEDManager::init( const LEDManager_init_config_t & config )
     /* Initialize the led layers */
     result = layers_init( config );
     EXIT_IF_ERR( result, "layers_init failed" );
-
-    /* Get the fade effect configuration */
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_FADE_EFFECT, (const void **)&p_fade_effect_conf );
-
-    /* Check if the config is cleared */
-    if( *p_fade_effect_conf == 0xFF )
-    {
-        cfgmem_fade_effect_config_save( 0 );
-    }
-
-    LEDLayers.fade_effect_setup( *p_fade_effect_conf );
 
     /* Initialize the default led effect to be the LEDLayers one */
     p_LEDEffect = &LEDLayers;
@@ -137,6 +130,9 @@ result_t LEDManager::layers_init( const LEDManager_init_config_t & config )
     result = LEDLayers.init( layers_config );
     EXIT_IF_ERR( result, "LEDLayers.init failed" );
 
+    /* Set up the fade effect mode */
+    LEDLayers.fade_effect_setup( p_ledmanager_conf->fade_effect );
+
 _EXIT:
     return result;
 }
@@ -145,11 +141,29 @@ _EXIT:
 /*                   Config Memory                  */
 /****************************************************/
 
+result_t LEDManager::cfgmem_config_load( void )
+{
+    result_t result = RESULT_ERR;
+
+    /* Get the LEDManager configuration */
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_LEDMANAGER, (const void **)&p_ledmanager_conf );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
+    /* Check if the fade effect config is cleared */
+    if( p_ledmanager_conf->fade_effect == 0xFF )
+    {
+        cfgmem_fade_effect_config_save( 0 );
+    }
+
+_EXIT:
+    return result;
+}
+
 void LEDManager::cfgmem_fade_effect_config_save( uint8_t fade_effect )
 {
     result_t result = RESULT_ERR;
 
-    result = ConfigManager.config_item_update( p_fade_effect_conf, &fade_effect, sizeof( uint8_t) );
+    result = ConfigManager.config_item_update( &p_ledmanager_conf->fade_effect, &fade_effect, sizeof( p_ledmanager_conf->fade_effect ) );
     ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
 
     UNUSED( result );
@@ -975,10 +989,7 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
 
 INLINE result_t LEDManager::idleleds_init( void )
 {
-    result_t result = RESULT_ERR;
-
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_IDLELEDS, (const void **)&p_idleleds_conf );
-    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+    p_idleleds_conf = &p_ledmanager_conf->idleleds;
 
     /* Check if the config is cleared */
     if( (uint8_t)p_idleleds_conf->true_sleep_enabled == 0xFF )
@@ -989,8 +1000,7 @@ INLINE result_t LEDManager::idleleds_init( void )
     /* After startup, we are in OFF state, waiting for an external event */
     idleleds_state_set_off( false );
 
-_EXIT:
-    return result;
+    return RESULT_OK;
 }
 
 INLINE void LEDManager::idleleds_reset( void )
@@ -1141,10 +1151,7 @@ INLINE void LEDManager::idleleds_machine( void )
 
 INLINE result_t LEDManager::brightness_init( void )
 {
-    result_t result = RESULT_ERR;
-
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_BRIGHTNESS, (const void **)&p_brightness_conf );
-    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+    p_brightness_conf = &p_ledmanager_conf->brightness;
 
     /* Check if the config is cleared */
     if( p_brightness_conf->is_valid != 0xFF )
@@ -1152,8 +1159,7 @@ INLINE result_t LEDManager::brightness_init( void )
         cfgmem_brightness_config_save( &brightness_conf_default );
     }
 
-_EXIT:
-    return result;
+    return RESULT_OK;
 }
 
 /****************************************************/

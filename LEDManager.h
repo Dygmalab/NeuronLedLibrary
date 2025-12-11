@@ -74,7 +74,12 @@ class LEDManager {
         uint8_t is_valid;                   /* The valid brightness config when is_valid == 0x00 */
     } brightness_conf_t;
 
-
+    typedef struct PACK
+    {
+        uint8_t fade_effect;
+        idleleds_conf_t idleleds;
+        brightness_conf_t brightness;
+    } ledmanager_conf_t;
 
   public:
 
@@ -113,7 +118,7 @@ class LEDManager {
 
   private:
 
-    const uint8_t * p_fade_effect_conf;
+    const ledmanager_conf_t * p_ledmanager_conf;
 
     kbdif_t * p_kbdif = nullptr;
     LEDPalette * p_LEDPalette = nullptr;
@@ -130,6 +135,7 @@ class LEDManager {
 
     result_t kbdif_initialize( void );
 
+    result_t cfgmem_config_load( void );
     void cfgmem_fade_effect_config_save( uint8_t fade_effect );
     void cfgmem_idleleds_config_save( const idleleds_conf_t * p_new_conf );
     void cfgmem_idleleds_true_sleep_enabled_save( bool_t true_sleep_enabled );
