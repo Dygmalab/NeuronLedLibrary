@@ -24,6 +24,9 @@
 
 #include "LEDDevice-Remote.h"
 #include "LEDLayers.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
 
 LEDDeviceRemote::LEDDeviceRemote( led_device_type_t led_device_type, uint16_t led_count ) : LEDDevice( led_device_type, led_count )
 {
@@ -71,41 +74,57 @@ void LEDDeviceRemote::update_map( Packet packet )
     LEDLayers::LEDLayers_layer_colormap_t * p_layer_colormap;
     layer_message_t * p_layer_message;
 
-    ASSERT_DYGMA( ((uint16_t)sizeof( packet.data ) >= (message_size + 1)), "The LED layer message does not fit into the packet buffer" );
+    // Maximum LEDs that fit in one packet: (MAX_DATA_SIZE - 1) * 2
+    // MAX_DATA_SIZE = 28, so max = (28 - 1) * 2 = 54 LEDs
+    const uint16_t MAX_LEDS_PER_PACKET = (sizeof(packet.data) - 1) * 2;
+
+    NRF_LOG_DEBUG("LEDDeviceRemote::update_map - led_count: %d", led_count);
+    NRF_LOG_DEBUG("LEDDeviceRemote::update_map - MAX_LEDS_PER_PACKET: %d", MAX_LEDS_PER_PACKET);
 
     for ( layer_id = 0; layer_id < LEDLayers.layers_count_get(); layer_id++ )
     {
         p_layer_colormap = LEDLayers.layer_colormap_get( layer_id );
-        packet.header.command = message_command;
-        packet.header.size = 1 + message_size;      /* 1+ ... stands for the layer_id value at the head of the message data */
-
-        /* Prepare the message */
-        p_layer_message = (layer_message_t *)&packet.data[0];
-
-        /* Set the layer id into the message structure */
-        p_layer_message->layer_id = layer_id;
-
-        /* Fill the layer message color data */
         ASSERT_DYGMA( ( (ledmap_pos + led_count) <= p_layer_colormap->size() ), "Current led device map exceeds the full layer colormap space" );
 
-        message_color_first = true;
-
-        for( led_id = 0; led_id < led_count; led_id++ )
+        uint16_t leds_sent = 0;
+        
+        while (leds_sent < led_count)
         {
-            uint16_t message_colors_id = ( led_id >> 1 );   /* == ( led_id / 2 ) */
+            uint16_t leds_in_this_packet = (led_count - leds_sent > MAX_LEDS_PER_PACKET) ? MAX_LEDS_PER_PACKET : (led_count - leds_sent);
+            uint16_t this_message_size = (leds_in_this_packet / 2) + (leds_in_this_packet % 2);
+            
+            packet.header.command = message_command;
+            packet.header.size = 1 + this_message_size;
+            packet.header.has_more_packets = (leds_sent + leds_in_this_packet < led_count);
 
-            if( message_color_first == true )
+            p_layer_message = (layer_message_t *)&packet.data[0];
+            p_layer_message->layer_id = layer_id;
+
+            message_color_first = true;
+
+            for( led_id = 0; led_id < leds_in_this_packet; led_id++ )
             {
-                p_layer_message->colors[message_colors_id].first = p_layer_colormap->data()[ ledmap_pos + led_id ];
-                message_color_first = false;
+                uint16_t message_colors_id = ( led_id >> 1 );
+                uint16_t global_led_id = leds_sent + led_id;
+
+                if( message_color_first == true )
+                {
+                    p_layer_message->colors[message_colors_id].first = p_layer_colormap->data()[ ledmap_pos + global_led_id ];
+                    message_color_first = false;
+                }
+                else
+                {
+                    p_layer_message->colors[message_colors_id].second = p_layer_colormap->data()[ ledmap_pos + global_led_id ];
+                    message_color_first = true;
+                }
             }
-            else
-            {
-                p_layer_message->colors[message_colors_id].second = p_layer_colormap->data()[ ledmap_pos + led_id ];
-                message_color_first = true;
-            }
+
+            NRF_LOG_DEBUG("Sending packet: layer=%d, leds=%d-%d, has_more=%d", 
+                         layer_id, leds_sent, leds_sent + leds_in_this_packet - 1, packet.header.has_more_packets);
+
+            Communications.sendPacket( packet );
+            
+            leds_sent += leds_in_this_packet;
         }
-
-        Communications.sendPacket( packet );
     }
 }
