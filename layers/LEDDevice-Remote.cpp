@@ -94,8 +94,18 @@ void LEDDeviceRemote::update_map( Packet packet )
             uint16_t this_message_size = (leds_in_this_packet / 2) + (leds_in_this_packet % 2);
             
             packet.header.command = message_command;
-            packet.header.size = 1 + this_message_size;
-            packet.header.has_more_packets = (leds_sent + leds_in_this_packet < led_count);
+            
+            // Build the size byte manually to avoid bit field issues
+            bool has_more = ((leds_sent + leds_in_this_packet) < led_count);
+            uint8_t size_value = 1 + this_message_size;
+            
+            // Clear the byte first, then set size and has_more_packets
+            packet.buf[2] = 0;  // Clear the byte
+            packet.buf[2] = (size_value & 0x7F) | (has_more ? 0x80 : 0x00);  // Set size (7 bits) and has_more (1 bit)
+            
+            // Debug: Print raw byte value
+            NRF_LOG_DEBUG("Sending: layer=%d, size=%d, has_more=%d, raw_byte=0x%02X", 
+                         layer_id, size_value, has_more, packet.buf[2]);
 
             p_layer_message = (layer_message_t *)&packet.data[0];
             p_layer_message->layer_id = layer_id;

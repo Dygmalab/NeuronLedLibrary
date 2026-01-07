@@ -657,7 +657,8 @@ void LEDManager::comks_connected( Packet packet )
     p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
-    led_effect_refresh();
+    comks_update_brightness();  // Send BRIGHTNESS before MODE_LED
+    led_effect_refresh();       // This sends MODE_LED - must be last
 }
 
 void LEDManager::comks_retry_layers( Packet packet )
@@ -665,7 +666,8 @@ void LEDManager::comks_retry_layers( Packet packet )
     p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
-    led_effect_refresh();
+    comks_update_brightness();  // Send BRIGHTNESS before MODE_LED
+    led_effect_refresh();       // This sends MODE_LED - must be last
 }
 
 void LEDManager::comks_update_brightness( void )
