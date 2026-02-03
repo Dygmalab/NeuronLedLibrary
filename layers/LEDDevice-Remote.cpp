@@ -78,9 +78,6 @@ void LEDDeviceRemote::update_map( Packet packet )
     // MAX_DATA_SIZE = 28, so max = (28 - 1) * 2 = 54 LEDs
     const uint16_t MAX_LEDS_PER_PACKET = (sizeof(packet.data) - 1) * 2;
 
-    NRF_LOG_DEBUG("LEDDeviceRemote::update_map - led_count: %d", led_count);
-    NRF_LOG_DEBUG("LEDDeviceRemote::update_map - MAX_LEDS_PER_PACKET: %d", MAX_LEDS_PER_PACKET);
-
     for ( layer_id = 0; layer_id < LEDLayers.layers_count_get(); layer_id++ )
     {
         p_layer_colormap = LEDLayers.layer_colormap_get( layer_id );
@@ -104,11 +101,6 @@ void LEDDeviceRemote::update_map( Packet packet )
             
             // Write directly to the bit fields instead of raw byte
             packet.header.size = size_value;
-            packet.header.has_more_packets = has_more;
-            
-            // Debug: Print values and raw byte to verify
-            NRF_LOG_DEBUG("Sending: layer=%d, size=%d, has_more=%d, raw_byte=0x%02X", 
-                         layer_id, size_value, has_more, packet.buf[2]);
 
             p_layer_message = (layer_message_t *)&packet.data[0];
             p_layer_message->layer_id = layer_id;
@@ -131,9 +123,6 @@ void LEDDeviceRemote::update_map( Packet packet )
                     message_color_first = true;
                 }
             }
-
-            NRF_LOG_DEBUG("Sending packet: layer=%d, leds=%d-%d, has_more=%d", 
-                         layer_id, leds_sent, leds_sent + leds_in_this_packet - 1, packet.header.has_more_packets);
 
             Communications.sendPacket( packet );
             
