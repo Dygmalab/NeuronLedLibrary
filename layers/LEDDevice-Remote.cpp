@@ -90,9 +90,14 @@ void LEDDeviceRemote::update_map( Packet packet )
             uint16_t leds_in_this_packet = (led_count - leds_sent > MAX_LEDS_PER_PACKET) ? MAX_LEDS_PER_PACKET : (led_count - leds_sent);
             uint16_t this_message_size = (leds_in_this_packet / 2) + (leds_in_this_packet % 2);
             
+            // Preserve device before clearing header
+            Communications_protocol::Devices target_device = packet.header.device;
+            
             // Clear the entire header to avoid residual state from previous packets
             memset(&packet.header, 0, sizeof(packet.header));
             
+            // Restore device to ensure packet is routed to correct side
+            packet.header.device = target_device;
             packet.header.command = message_command;
             
             // Write directly to bit fields to avoid compiler reinterpretation issues
