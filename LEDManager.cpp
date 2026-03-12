@@ -657,7 +657,8 @@ void LEDManager::comks_connected( Packet packet )
     p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
-    led_effect_refresh();
+    comks_update_brightness();  // Send BRIGHTNESS before MODE_LED
+    led_effect_refresh();       // This sends MODE_LED - must be last
 }
 
 void LEDManager::comks_retry_layers( Packet packet )
@@ -665,7 +666,8 @@ void LEDManager::comks_retry_layers( Packet packet )
     p_LEDPalette->update_palette( packet );
     LEDLayers.update_map_backlight( packet );
     LEDLayers.update_map_underglow( packet );
-    led_effect_refresh();
+    comks_update_brightness();  // Send BRIGHTNESS before MODE_LED
+    led_effect_refresh();       // This sends MODE_LED - must be last
 }
 
 void LEDManager::comks_update_brightness( void )
@@ -956,6 +958,8 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
 
             leds_off_wired_time_ms = leds_off_wired_time_sec * 1000;  /* Convert from seconds to ms. */
             cfgmem_idleleds_leds_off_wired_time_ms_save( leds_off_wired_time_ms );
+
+            idleleds_state_refresh = true;
         }
     }
 
@@ -974,6 +978,8 @@ kbdapi_event_result_t LEDManager::command_idleleds_process( const char * p_comma
 
             leds_off_wireless_time_ms = leds_off_wireless_time_sec * 1000; /* Convert from seconds to ms. */
             cfgmem_idleleds_leds_off_wireless_time_ms_save( leds_off_wireless_time_ms );
+
+            idleleds_state_refresh = true;
         }
         return KBDAPI_EVENT_RESULT_CONSUMED;
     }
@@ -1048,6 +1054,8 @@ void LEDManager::idleleds_state_set_on( void )
     /* Set the idle leds timeout and move to the ON state */
     timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
     idleleds_state_set( IDLELEDS_STATE_ON );
+
+    idleleds_state_refresh = false;
 }
 
 void LEDManager::idleleds_state_set_off( bool_t forced )
@@ -1061,11 +1069,19 @@ void LEDManager::idleleds_state_set_off( bool_t forced )
     /* Set the true sleep timeout and move to the OFF state */
     timer_set_ms( &idleleds_timer, idleleds_timeout_ms );
     idleleds_state_set( state_off_type );
+
+    idleleds_state_refresh = false;
 }
 
 INLINE void LEDManager::idleleds_state_on( void )
 {
-    if( leds_enabled_flag == false )
+    if( idleleds_state_refresh == true )
+    {
+        /* Refresh the ON state */
+        idleleds_state_set_on();
+        return;
+    }
+    else if( leds_enabled_flag == false )
     {
         /* The LEDs were disabled externally to this state machine - immediately move to the forced OFF state */
         idleleds_state_set_off( true );
@@ -1085,7 +1101,14 @@ INLINE void LEDManager::idleleds_state_on( void )
 
 INLINE void LEDManager::idleleds_state_off( void )
 {
-    if( leds_enabled_flag == true )
+    if( idleleds_state_refresh == true )
+    {
+        /* Refresh the OFF state */
+        bool_t forced = ( idleleds_state == IDLELEDS_STATE_OFF_FORCED ) ? true : false;
+        idleleds_state_set_off( forced );
+        return;
+    }
+    else if( leds_enabled_flag == true )
     {
         /* Move to the ON state */
         idleleds_state_set_on();

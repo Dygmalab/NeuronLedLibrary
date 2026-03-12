@@ -193,6 +193,7 @@ class LEDManager {
     bool_t idleleds_true_sleep_enabled = false;
     bool_t idleleds_leds_off_enabled = false;
     bool_t idleleds_new_connection = false;
+    bool_t idleleds_state_refresh = false;
 
     dl_timer_t idleleds_timer = 0;
     uint32_t idleleds_timeout_ms = 0;
