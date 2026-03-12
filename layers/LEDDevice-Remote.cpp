@@ -24,9 +24,6 @@
 
 #include "LEDDevice-Remote.h"
 #include "LEDLayers.h"
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
 LEDDeviceRemote::LEDDeviceRemote( led_device_type_t led_device_type, uint16_t led_count ) : LEDDevice( led_device_type, led_count )
 {
