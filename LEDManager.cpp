@@ -1033,6 +1033,8 @@ INLINE void LEDManager::idleleds_connected_handle( void )
 INLINE void LEDManager::idleleds_state_set( idleleds_state_t state )
 {
     idleleds_state = state;
+
+    mcu_sleep_postpone();
 }
 
 void LEDManager::idleleds_state_set_on( void )
@@ -1192,6 +1194,8 @@ INLINE result_t LEDManager::brightness_init( void )
 INLINE void LEDManager::machine_state_set( led_manager_state_t state )
 {
     machine_state = state;
+
+    mcu_sleep_postpone();
 }
 
 INLINE void LEDManager::machine_state_idle( void )
