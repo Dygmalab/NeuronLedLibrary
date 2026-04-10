@@ -98,7 +98,6 @@ void LEDDeviceRemote::update_map( Packet packet )
             packet.header.command = message_command;
             
             // Write directly to bit fields to avoid compiler reinterpretation issues
-            bool has_more = ((leds_sent + leds_in_this_packet) < led_count);
             uint8_t size_value = 1 + this_message_size;
             
             // Write directly to the bit fields instead of raw byte
