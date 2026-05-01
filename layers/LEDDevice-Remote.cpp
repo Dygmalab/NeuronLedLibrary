@@ -30,7 +30,7 @@ LEDDeviceRemote::LEDDeviceRemote( led_device_type_t led_device_type, uint16_t le
     /* Determine the message command */
     switch( led_device_type )
     {
-        /* Device types for regular keyboards (e.g. Sonshi) */
+        /* Device types for regular keyboards (e.g. Sonsei) */
         case LED_DEVICE_TYPE_KS_BL:
         case LED_DEVICE_TYPE_LEFT_BL:
         case LED_DEVICE_TYPE_RIGHT_BL:

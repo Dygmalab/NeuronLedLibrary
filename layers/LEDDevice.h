@@ -38,7 +38,7 @@ class LEDDevice
         /* Local devices */
         LED_DEVICE_TYPE_NEURON = 1,
 
-        /* Device types for regular keyboards (e.g. Sonshi) */
+        /* Device types for regular keyboards (e.g. Sonsei) */
         LED_DEVICE_TYPE_KS_BL,
         LED_DEVICE_TYPE_KS_UG,
 
