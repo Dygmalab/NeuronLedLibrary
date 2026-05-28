@@ -34,6 +34,7 @@
 #include "LEDPalette.h"
 
 #include "Kaleidoscope-FocusSerial.h"
+#include "common.h"
 
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
@@ -49,9 +50,9 @@ const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_specific =
 const LEDManager::idleleds_conf_t LEDManager::idleleds_conf_default =
 {
     .true_sleep_enabled = false,
-    .true_sleep_time_ms = 600000,       /* 10 minutes */
-    .leds_off_wired_time_ms = 300000,   /*  5 minutes */
-    .leds_off_wireless_time_ms = 60000, /*  1 minute  */
+    .true_sleep_time_ms = DEFAULT_TRUE_SLEEP_TIME_MS,       /* 10 minutes */
+    .leds_off_wired_time_ms = DEFAULT_LEDS_OFF_WIRED_TIME_MS,   /*  5 minutes */
+    .leds_off_wireless_time_ms = DEFAULT_LEDS_OFF_WIRELESS_TIME_MS, /*  1 minute  */
 };
 
 const LEDManager::brightness_conf_t LEDManager::brightness_conf_default =
