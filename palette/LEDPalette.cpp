@@ -29,6 +29,8 @@
 
 #include "Kaleidoscope-FocusSerial.h"
 
+static constexpr uint8_t color_id_size = 1;
+
 #define PALETTE_COLOR_GET( color_id )   ( ( const void * )( (uint32_t)p_color_palette + ( color_id * color_size ) ))
 
 result_t LEDPalette::init()
@@ -64,7 +66,7 @@ void LEDPalette::update_palette_piece( Packet &packet, uint8_t color_id, uint8_t
     uint8_t * p_color;
 
     packet.header.command = Communications_protocol::PALETTE_COLORS;
-    packet.header.size = color_size * color_cnt;
+    packet.header.size = color_size * color_cnt + color_id_size;
 
     /* Set the first color id */
     packet.data[0] = color_id;
