@@ -81,6 +81,8 @@ class LEDManager {
         brightness_conf_t brightness;
     } ledmanager_conf_t;
 
+    typedef uint32_t LEDManager_prio_lock_t;
+
   public:
 
     result_t init( const LEDManager_init_config_t & config );
@@ -97,8 +99,9 @@ class LEDManager {
     bool_t leds_enabled( void );
 
     void led_effect_set( LEDEffect::led_effect_type_t effect_type );
-    void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
-    void led_effect_reset_prio( void );
+    result_t led_effect_prio_set( LEDManager_prio_lock_t * p_lock, LEDEffect::led_effect_type_t effect_type );
+    result_t led_effect_prio_reset( LEDManager_prio_lock_t * p_lock );
+    bool_t led_effect_prio_lock_check( LEDManager_prio_lock_t * p_lock );
     void led_effect_refresh( void );
 
     void run( void );
@@ -126,6 +129,8 @@ class LEDManager {
     LEDEffect * p_LEDEffect = nullptr;
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
+
+    LEDManager_prio_lock_t * p_prio_lock = nullptr;
 
     bool_t leds_enabled_flag = false;
     bool_t com_mode_wired_flag = true;

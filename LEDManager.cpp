@@ -36,6 +36,8 @@
 #include "Kaleidoscope-FocusSerial.h"
 #include "common.h"
 
+#define LEDMANAGER_PRIO_LOCK_VALUE      0x4B434F4C      /* "LOCK" */
+
 const LEDManager::LEDEffect_list_t LEDManager::LEDEffect_list_regular =
 {
     &LEDLayers, &LEDRainbowEffectDefy, &LEDRainbowWaveEffectDefy, &LEDStalkerDefy,
@@ -475,16 +477,66 @@ void LEDManager::led_effect_set( LEDEffect::led_effect_type_t effect_type )
     led_effect_set_type( effect_type, false );
 }
 
-void LEDManager::led_effect_set_prio( LEDEffect::led_effect_type_t effect_type )
+result_t LEDManager::led_effect_prio_set( LEDManager_prio_lock_t * p_lock, LEDEffect::led_effect_type_t effect_type )
 {
+    /* Check if the priority effect is active and locked */
+    if( p_prio_lock != nullptr && p_prio_lock != p_lock )
+    {
+        /* There is currently an active lock and the caller of the function is not owner of that lock */
+
+        return RESULT_ERR;
+    }
+
+    /* If we let the owner of the lock through, this assert must not check against already set locks */
+//    ASSERT_DYGMA( *p_lock == 0, "Invalid state of the LED Manager priority lock" );
+
+    /* Set the priority lock */
+    *p_lock = LEDMANAGER_PRIO_LOCK_VALUE;
+    p_prio_lock = p_lock;
+
     led_effect_set_type( effect_type, true );
+
+    return RESULT_OK;
 }
 
-void LEDManager::led_effect_reset_prio( void )
+result_t LEDManager::led_effect_prio_reset( LEDManager_prio_lock_t * p_lock )
 {
+    /* Check the lock */
+    if( p_prio_lock != p_lock )
+    {
+        /* Another lock is active or no lock being in place currently */
+        return RESULT_ERR;
+    }
+
+    ASSERT_DYGMA( *p_lock == LEDMANAGER_PRIO_LOCK_VALUE, "Invalid state of the LED Manager priority lock" );
+
+    /* Reset the priority lock */
+    *p_lock = 0;
+    p_prio_lock = nullptr;
+
     p_LEDEffect_prio = nullptr;
 
     led_effect_activate();
+
+    return RESULT_OK;
+}
+
+bool_t LEDManager::led_effect_prio_lock_check( LEDManager_prio_lock_t * p_lock )
+{
+    if( p_prio_lock == nullptr )
+    {
+        /* There is no priority lock active currently */
+        return true;
+    }
+    else if( p_prio_lock == p_lock )
+    {
+        /* The active lock is owned by the caller of this check */
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 LEDEffect::led_effect_type_t LEDManager::led_effect_get_active_type( void )
