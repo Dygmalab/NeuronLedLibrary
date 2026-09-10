@@ -92,6 +92,7 @@ class LEDManager {
     void com_mode_set( bool_t wired );
     void com_new_connection_set( void );
     void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
+    void true_sleep_enter( void );
 
     void leds_enable( void );
     void leds_disable( void );
@@ -211,6 +212,7 @@ class LEDManager {
     INLINE void idleleds_state_set( idleleds_state_t state );
     void idleleds_state_set_on( void );
     void idleleds_state_set_off( bool_t forced );
+    void idleleds_state_set_true_sleep( void );
 
     INLINE void idleleds_state_on( void );
     INLINE void idleleds_state_off( void );

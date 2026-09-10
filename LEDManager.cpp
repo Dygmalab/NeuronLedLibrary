@@ -340,6 +340,18 @@ void LEDManager::update_brightness( brightness_led_effect_t led_effect, bool_t t
     brightness_update_flag = true;
 }
 
+void LEDManager::true_sleep_enter( void )
+{
+    /* Disable the leds */
+    leds_disable();
+
+    /* Enter the true sleep if the true sleep is enabled */
+    if( idleleds_true_sleep_enabled == true )
+    {
+        idleleds_state_set_true_sleep();
+    }
+}
+
 /****************************************************/
 /*         LED Effect control and navigation        */
 /****************************************************/
@@ -1128,6 +1140,14 @@ void LEDManager::idleleds_state_set_off( bool_t forced )
     idleleds_state_refresh = false;
 }
 
+void LEDManager::idleleds_state_set_true_sleep( void )
+{
+    /* Send the True Sleep command */
+    comks_sleep_send();
+
+    idleleds_state_set( IDLELEDS_STATE_TRUE_SLEEP );
+}
+
 INLINE void LEDManager::idleleds_state_on( void )
 {
     if( idleleds_state_refresh == true )
@@ -1174,10 +1194,8 @@ INLINE void LEDManager::idleleds_state_off( void )
         return;
     }
 
-    /* Send the True Sleep command */
-    comks_sleep_send();
-
-    idleleds_state_set( IDLELEDS_STATE_TRUE_SLEEP );
+    /* Move to the True Sleep state */
+    idleleds_state_set_true_sleep();
 }
 
 INLINE void LEDManager::idleleds_state_true_sleep( void )
