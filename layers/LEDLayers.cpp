@@ -23,6 +23,7 @@
  */
 
 #include "Config_manager.h"
+#include "Kbd_manager.h"
 #include "LEDLayers.h"
 #include "LEDManager.h"
 
@@ -295,9 +296,8 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
         dicolor_id++;
     }
 
-    auto const &keyScanner = kaleidoscope::Runtime.device().keyScanner();
-    auto deviceLeft = keyScanner.leftHandDevice();
-    auto devicesRight = keyScanner.rightHandDevice();
+    auto deviceLeft = kbdManager.leftHandDevice();
+    auto devicesRight = kbdManager.rightHandDevice();
     Packet packet{};
     packet.header.device = deviceLeft;
     update_map_backlight( packet );
