@@ -57,30 +57,6 @@ class LEDManager {
         const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
     } LEDManager_init_config_t;
 
-    typedef struct PACK
-    {
-        bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
-        uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
-        uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
-        uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
-    } idleleds_conf_t;
-
-    typedef struct PACK
-    {
-        uint8_t wired_backlight;
-        uint8_t wired_underglow;
-        uint8_t wireless_backlight;
-        uint8_t wireless_underglow;
-        uint8_t is_valid;                   /* The valid brightness config when is_valid == 0x00 */
-    } brightness_conf_t;
-
-    typedef struct PACK
-    {
-        uint8_t fade_effect;
-        idleleds_conf_t idleleds;
-        brightness_conf_t brightness;
-    } ledmanager_conf_t;
-
     typedef uint32_t LEDManager_prio_lock_t;
 
   public:
@@ -121,6 +97,30 @@ class LEDManager {
     typedef std::vector<LEDEffect*> LEDEffect_list_t;
 
   private:
+
+    typedef struct PACK
+    {
+        bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
+        uint32_t true_sleep_time_ms;        /* Timeout in miliseconds until the device goes to sleep */
+        uint32_t leds_off_wired_time_ms;    /* Timeout in miliseconds until the device switches off the leds when working wired */
+        uint32_t leds_off_wireless_time_ms; /* Timeout in miliseconds until the device switches off the leds when working wireless */
+    } idleleds_conf_t;
+
+    typedef struct PACK
+    {
+        uint8_t wired_backlight;
+        uint8_t wired_underglow;
+        uint8_t wireless_backlight;
+        uint8_t wireless_underglow;
+        uint8_t is_valid;                   /* The valid brightness config when is_valid == 0x00 */
+    } brightness_conf_t;
+
+    typedef struct PACK
+    {
+        uint8_t fade_effect;
+        idleleds_conf_t idleleds;
+        brightness_conf_t brightness;
+    } ledmanager_conf_t;
 
     const ledmanager_conf_t * p_ledmanager_conf;
 

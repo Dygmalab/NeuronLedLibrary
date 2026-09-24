@@ -71,7 +71,7 @@ result_t LEDLayers::init( const LEDLayers_config_t & config )
     layer_colormap.resize( leds_count );
 
     /* Get the colormap configuration */
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_COLORMAP, (const void **)&p_colormap_conf );
+    result = ConfigManager.config_item_request( (const void **)&p_colormap_conf, sizeof( colormap_config_t ) );
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
 
 _EXIT:

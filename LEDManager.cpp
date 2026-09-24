@@ -149,7 +149,7 @@ result_t LEDManager::cfgmem_config_load( void )
     result_t result = RESULT_ERR;
 
     /* Get the LEDManager configuration */
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_LEDMANAGER, (const void **)&p_ledmanager_conf );
+    result = ConfigManager.config_item_request( (const void **)&p_ledmanager_conf, sizeof( ledmanager_conf_t ) );
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
 
     /* Check if the fade effect config is cleared */
