@@ -64,6 +64,16 @@ const LEDManager::brightness_conf_t LEDManager::brightness_conf_default =
     .is_valid = 0x00,                   /* The valid brightness config when is_valid == 0x00 */
 };
 
+const LEDManager::caps_lock_indicator_conf_t LEDManager::caps_lock_indicator_conf_default =
+{
+    .enabled = 0,
+    .red = 255,
+    .green = 80,
+    .blue = 0,
+    .white = 0,
+    .is_valid = 0x00,                   /* The valid Caps Lock indicator config when is_valid == 0x00 */
+};
+
 result_t LEDManager::init( const LEDManager_init_config_t & config )
 {
     result_t result = RESULT_ERR;
@@ -83,6 +93,10 @@ result_t LEDManager::init( const LEDManager_init_config_t & config )
     /* Initialize the LEDs brightness */
     result = brightness_init();
     EXIT_IF_ERR( result, "brightness_init failed" );
+
+    /* Initialize the Caps Lock LED indicator */
+    result = caps_lock_indicator_init();
+    EXIT_IF_ERR( result, "caps_lock_indicator_init failed" );
 
     /* Initialize the keyscanner communication interface */
     result = comks_init( );
@@ -265,6 +279,43 @@ void LEDManager::cfgmem_brightness_wireless_underglow_save( uint8_t wireless_und
     result_t result = RESULT_ERR;
 
     result = ConfigManager.config_item_update( &p_brightness_conf->wireless_underglow, &wireless_underglow, sizeof( p_brightness_conf->wireless_underglow) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_caps_lock_indicator_config_save( const caps_lock_indicator_conf_t * p_new_conf )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( p_caps_lock_indicator_conf, p_new_conf, sizeof( caps_lock_indicator_conf_t) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_caps_lock_indicator_enabled_save( uint8_t enabled )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_update( &p_caps_lock_indicator_conf->enabled, &enabled, sizeof( p_caps_lock_indicator_conf->enabled) );
+    ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
+
+    UNUSED( result );
+}
+
+void LEDManager::cfgmem_caps_lock_indicator_color_save( uint8_t red, uint8_t green, uint8_t blue )
+{
+    result_t result = RESULT_ERR;
+    caps_lock_indicator_conf_t new_conf = *p_caps_lock_indicator_conf;
+
+    new_conf.red = red;
+    new_conf.green = green;
+    new_conf.blue = blue;
+    new_conf.white = 0;
+    new_conf.is_valid = 0x00;
+
+    result = ConfigManager.config_item_update( p_caps_lock_indicator_conf, &new_conf, sizeof( caps_lock_indicator_conf_t) );
     ASSERT_DYGMA( result == RESULT_OK, "ConfigManager.config_item_update failed" );
 
     UNUSED( result );
@@ -740,7 +791,9 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         BRIGHTNESS_UG_WIRED,
         BRIGHTNESS_WIRELESS,
         BRIGHTNESS_UG_WIRELESS,
-        FADE_EFFECT
+        FADE_EFFECT,
+        CAPS_LOCK_INDICATOR_ENABLED,
+        CAPS_LOCK_INDICATOR_COLOR
     } subCommand;
 
     if ( LEDLayers.leds_count_get() == 0 ) return KBDAPI_EVENT_RESULT_IGNORED;
@@ -750,7 +803,9 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
                                     "led.brightnessUG\n"
                                     "led.brightness.wireless\n"
                                     "led.brightnessUG.wireless\n"
-                                    "led.fade\n"))
+                                    "led.fade\n"
+                                    "led.capsLockIndicator.enabled\n"
+                                    "led.capsLockIndicator.color\n"))
         return KBDAPI_EVENT_RESULT_IGNORED;
 
     if (strncmp(p_command, "led.", 4) != 0) return KBDAPI_EVENT_RESULT_IGNORED;
@@ -766,6 +821,10 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
         subCommand = BRIGHTNESS_UG_WIRELESS;
     else if (strcmp(p_command + 4, "fade") == 0)
         subCommand = FADE_EFFECT;
+    else if (strcmp(p_command + 4, "capsLockIndicator.enabled") == 0)
+        subCommand = CAPS_LOCK_INDICATOR_ENABLED;
+    else if (strcmp(p_command + 4, "capsLockIndicator.color") == 0)
+        subCommand = CAPS_LOCK_INDICATOR_COLOR;
     else
         return KBDAPI_EVENT_RESULT_IGNORED;
 
@@ -857,6 +916,44 @@ kbdapi_event_result_t LEDManager::command_led_process( const char * p_command )
 
                 LEDLayers.fade_effect_setup( fade_effect_enable );
             }
+            break;
+        }
+        case CAPS_LOCK_INDICATOR_ENABLED:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( p_caps_lock_indicator_conf->enabled );
+            }
+            else
+            {
+                uint8_t enabled;
+
+                ::Focus.read(enabled);
+                enabled = ( enabled == 0 ) ? 0 : 1;
+                cfgmem_caps_lock_indicator_enabled_save( enabled );
+            }
+            break;
+        }
+        case CAPS_LOCK_INDICATOR_COLOR:
+        {
+            if (::Focus.isEOL())
+            {
+                ::Focus.send( p_caps_lock_indicator_conf->red,
+                              p_caps_lock_indicator_conf->green,
+                              p_caps_lock_indicator_conf->blue );
+            }
+            else
+            {
+                uint8_t red;
+                uint8_t green;
+                uint8_t blue;
+
+                ::Focus.read(red);
+                ::Focus.read(green);
+                ::Focus.read(blue);
+                cfgmem_caps_lock_indicator_color_save( red, green, blue );
+            }
+            break;
         }
         case MODE:
         {
@@ -1186,6 +1283,22 @@ INLINE result_t LEDManager::brightness_init( void )
     }
 
     return RESULT_OK;
+}
+
+INLINE result_t LEDManager::caps_lock_indicator_init( void )
+{
+    result_t result = RESULT_ERR;
+
+    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_CAPS_LOCK_INDICATOR, (const void **)&p_caps_lock_indicator_conf );
+    EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
+
+    if( p_caps_lock_indicator_conf->is_valid != 0x00 )
+    {
+        cfgmem_caps_lock_indicator_config_save( &caps_lock_indicator_conf_default );
+    }
+
+_EXIT:
+    return result;
 }
 
 /****************************************************/

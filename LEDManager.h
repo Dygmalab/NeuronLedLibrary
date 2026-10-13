@@ -76,6 +76,16 @@ class LEDManager {
 
     typedef struct PACK
     {
+        uint8_t enabled;
+        uint8_t red;
+        uint8_t green;
+        uint8_t blue;
+        uint8_t white;
+        uint8_t is_valid;                   /* The valid Caps Lock indicator config when is_valid == 0x00 */
+    } caps_lock_indicator_conf_t;
+
+    typedef struct PACK
+    {
         uint8_t fade_effect;
         idleleds_conf_t idleleds;
         brightness_conf_t brightness;
@@ -149,6 +159,10 @@ class LEDManager {
     void cfgmem_brightness_wireless_backlight_save( uint8_t wireless_backlight );
     void cfgmem_brightness_wireless_underglow_save( uint8_t wireless_underglow );
 
+    void cfgmem_caps_lock_indicator_config_save( const caps_lock_indicator_conf_t * p_new_conf );
+    void cfgmem_caps_lock_indicator_enabled_save( uint8_t enabled );
+    void cfgmem_caps_lock_indicator_color_save( uint8_t red, uint8_t green, uint8_t blue );
+
     result_t comks_init( void );
     void comks_connected( Packet packet );
     void comks_retry_layers( Packet packet );
@@ -219,10 +233,13 @@ class LEDManager {
   private:
 
     static const brightness_conf_t brightness_conf_default;
+    static const caps_lock_indicator_conf_t caps_lock_indicator_conf_default;
 
     const brightness_conf_t * p_brightness_conf;
+    const caps_lock_indicator_conf_t * p_caps_lock_indicator_conf;
 
     INLINE result_t brightness_init( void );
+    INLINE result_t caps_lock_indicator_init( void );
 
     /****************************************************/
     /*                     Machine                      */
