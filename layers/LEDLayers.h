@@ -32,23 +32,10 @@
 #include "LedModeSerializable-Layer.h"
 #include "LedModeCommunication.h"
 
+#define COLORMAP_DICOLORS_CNT   ( ( ( APP_LEDS_CNT * APP_LAYERS_CNT ) + 1 ) >> 1 )   /* The +1 solves the situation of odd leds count and allocates the last byte correctly */
+
 class LEDLayers : public LEDEffect,
                   public LedModeCommunication {
-
-  public:
-    #define COLORMAP_DICOLORS_CNT   ( ( ( APP_LEDS_CNT * APP_LAYERS_CNT ) + 1 ) >> 1 )   /* The +1 solves the situation of odd leds count and allocates the last byte correctly */
-
-    typedef struct
-    {
-        uint8_t first : 4;
-        uint8_t second : 4;
-    } PACK colormap_dicolor_t;
-
-    typedef struct
-    {
-        colormap_dicolor_t dicolors[ COLORMAP_DICOLORS_CNT ];
-    } PACK colormap_config_t;
-
   public:
     typedef struct
     {
@@ -82,6 +69,17 @@ class LEDLayers : public LEDEffect,
     kbdapi_event_result_t command_process( const char * p_command );
 
   private:
+    typedef struct
+    {
+        uint8_t first : 4;
+        uint8_t second : 4;
+    } PACK colormap_dicolor_t;
+
+    typedef struct
+    {
+        colormap_dicolor_t dicolors[ COLORMAP_DICOLORS_CNT ];
+    } PACK colormap_config_t;
+
     const colormap_config_t * p_colormap_conf = nullptr;
 
     const LEDDevice_list_t * p_LEDDevice_list;

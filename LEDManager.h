@@ -57,6 +57,47 @@ class LEDManager {
         const LEDDevice_list_t * p_LEDDevice_list;  /* List of LED controlled devices */
     } LEDManager_init_config_t;
 
+    typedef uint32_t LEDManager_prio_lock_t;
+
+  public:
+
+    result_t init( const LEDManager_init_config_t & config );
+    result_t palette_init( const LEDManager_init_config_t & config );
+    result_t layers_init( const LEDManager_init_config_t & config );
+
+    void com_mode_set( bool_t wired );
+    void com_new_connection_set( void );
+    void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
+    void true_sleep_enter( void );
+
+    void leds_enable( void );
+    void leds_disable( void );
+    void leds_toggle( void );
+    bool_t leds_enabled( void );
+
+    void led_effect_set( LEDEffect::led_effect_type_t effect_type );
+    result_t led_effect_prio_set( LEDManager_prio_lock_t * p_lock, LEDEffect::led_effect_type_t effect_type );
+    result_t led_effect_prio_reset( LEDManager_prio_lock_t * p_lock );
+    bool_t led_effect_prio_lock_check( LEDManager_prio_lock_t * p_lock );
+    void led_effect_refresh( void );
+
+    void run( void );
+
+  private:
+
+    typedef struct
+    {
+        uint8_t backlight_brightness;
+        uint8_t underglow_brightness;
+        brightness_led_effect_t brightness_led_effect;
+        uint8_t take_control;                       /* Tell KS that we want to take or give brightness control. */
+    } PACK brightness_message_t;
+
+    typedef int16_t led_effect_id_t;
+    typedef std::vector<LEDEffect*> LEDEffect_list_t;
+
+  private:
+
     typedef struct PACK
     {
         bool_t true_sleep_enabled;          /* Flag signaling if the true sleep is enabled */
@@ -81,43 +122,6 @@ class LEDManager {
         brightness_conf_t brightness;
     } ledmanager_conf_t;
 
-  public:
-
-    result_t init( const LEDManager_init_config_t & config );
-    result_t palette_init( const LEDManager_init_config_t & config );
-    result_t layers_init( const LEDManager_init_config_t & config );
-
-    void com_mode_set( bool_t wired );
-    void com_new_connection_set( void );
-    void update_brightness( brightness_led_effect_t led_effect, bool_t take_brightness_control );
-
-    void leds_enable( void );
-    void leds_disable( void );
-    void leds_toggle( void );
-    bool_t leds_enabled( void );
-
-    void led_effect_set( LEDEffect::led_effect_type_t effect_type );
-    void led_effect_set_prio( LEDEffect::led_effect_type_t effect_type );
-    void led_effect_reset_prio( void );
-    void led_effect_refresh( void );
-
-    void run( void );
-
-  private:
-
-    typedef struct
-    {
-        uint8_t backlight_brightness;
-        uint8_t underglow_brightness;
-        brightness_led_effect_t brightness_led_effect;
-        uint8_t take_control;                       /* Tell KS that we want to take or give brightness control. */
-    } PACK brightness_message_t;
-
-    typedef int16_t led_effect_id_t;
-    typedef std::vector<LEDEffect*> LEDEffect_list_t;
-
-  private:
-
     const ledmanager_conf_t * p_ledmanager_conf;
 
     kbdif_t * p_kbdif = nullptr;
@@ -126,6 +130,8 @@ class LEDManager {
     LEDEffect * p_LEDEffect = nullptr;
     LEDEffect * p_LEDEffect_prio = nullptr;         /* This is a top priority effect which is forcefully being active until set to null */
     led_effect_id_t LEDEffect_id_regular = 0;
+
+    LEDManager_prio_lock_t * p_prio_lock = nullptr;
 
     bool_t leds_enabled_flag = false;
     bool_t com_mode_wired_flag = true;
@@ -206,6 +212,7 @@ class LEDManager {
     INLINE void idleleds_state_set( idleleds_state_t state );
     void idleleds_state_set_on( void );
     void idleleds_state_set_off( bool_t forced );
+    void idleleds_state_set_true_sleep( void );
 
     INLINE void idleleds_state_on( void );
     INLINE void idleleds_state_off( void );

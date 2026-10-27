@@ -31,7 +31,7 @@ result_t LEDPaletteRGB::init( void )
     const palette_config_t * p_palette_config;
 
     /* Load the LED palette config */
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_PALETTE, (const void **)&p_palette_config );
+    result = ConfigManager.config_item_request( (const void **)&p_palette_config, sizeof( palette_config_t ) );
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
 
     p_color_palette = &p_palette_config->palette;

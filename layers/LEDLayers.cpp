@@ -23,6 +23,7 @@
  */
 
 #include "Config_manager.h"
+#include "Kbd_manager.h"
 #include "LEDLayers.h"
 #include "LEDManager.h"
 
@@ -70,7 +71,7 @@ result_t LEDLayers::init( const LEDLayers_config_t & config )
     layer_colormap.resize( leds_count );
 
     /* Get the colormap configuration */
-    result = ConfigManager.config_item_request( ConfigManager::CFG_ITEM_TYPE_LEDS_COLORMAP, (const void **)&p_colormap_conf );
+    result = ConfigManager.config_item_request( (const void **)&p_colormap_conf, sizeof( colormap_config_t ) );
     EXIT_IF_ERR( result, "ConfigManager.config_item_request failed" );
 
 _EXIT:
@@ -295,9 +296,8 @@ kbdapi_event_result_t LEDLayers::command_process( const char * p_command )
         dicolor_id++;
     }
 
-    auto const &keyScanner = kaleidoscope::Runtime.device().keyScanner();
-    auto deviceLeft = keyScanner.leftHandDevice();
-    auto devicesRight = keyScanner.rightHandDevice();
+    auto deviceLeft = kbdManager.leftHandDevice();
+    auto devicesRight = kbdManager.rightHandDevice();
     Packet packet{};
     packet.header.device = deviceLeft;
     update_map_backlight( packet );
